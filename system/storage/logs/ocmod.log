@@ -1,0 +1,1400 @@
+2017-07-11 11:31:44 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:32:01 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:34:23 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:38:17 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:38:32 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:38:52 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 132
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 176
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-11 11:48:17 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-07-25 13:13:57 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 244
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-08-17 16:13:15 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 253
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-08-17 16:15:51 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 253
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+2017-12-05 12:20:37 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: comrooles
+FILE: system/library/cart/cart.php
+CODE: $this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = (quantity + " . (int)$quantity . ") WHERE customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
+LINE: 307
+CODE: public function getWeight() {
+LINE: 407
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "cart WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+LINE: 317
+CODE: $this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = '" . (int)$quantity . "' WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+LINE: 313
+CODE: $this->weight = $registry->get('weight');
+LINE: 14
+CODE: 'download'        => $download_data,
+LINE: 277
+CODE: if ($product['tax_class_id']) {
+LINE: 444
+CODE: $total += $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'];
+LINE: 469
+CODE: $product_id =  $cart['product_id'];
+LINE: 350
+CODE: $download_data = array();
+LINE: 247
+FILE: catalog/model/checkout/order.php
+CODE: $order_id = $this->db->getLastId();
+LINE: 21
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
+LINE: 84
+FILE: catalog/controller/checkout/cart.php
+CODE: $data['totals'] = array();
+LINE: 245
+FILE: catalog/view/theme/default/template/checkout/cart.tpl
+CODE: <?php if ($success) { ?>
+LINE: 49
+FILE: catalog/controller/checkout/checkout.php
+CODE: $data['shipping_required'] = $this->cart->hasShipping();
+LINE: 93
+FILE: catalog/view/theme/default/template/checkout/checkout.tpl
+CODE: <?php echo $content_top; ?>
+LINE: 28
+CODE: $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+LINE: 142
+FILE: catalog/controller/common/cart.php
+CODE: $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+LINE: 107
+FILE: catalog/controller/checkout/confirm.php
+CODE: $data['products'][] = array(
+LINE: 406
+CODE: 'total'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']),
+LINE: 417
+FILE: catalog/controller/product/product.php
+CODE: $data['points'] = $product_info['points'];
+LINE: 312
+FILE: catalog/view/theme/default/template/product/product.tpl
+CODE: <li class="active"><a href="#tab-description" data-toggle="tab"><?php echo $tab_description; ?></a></li>
+LINE: 41
+CODE: <div class="tab-pane active" id="tab-description"><?php echo $description; ?></div>
+LINE: 55
+FILE: catalog/view/theme/pav_krstore/template/product/product.tpl
+CODE: <li class="active"><a href="#tab-description" data-toggle="tab"><?php echo $tab_description; ?></a></li>
+LINE: 357
+CODE: <div class="tab-pane active" id="tab-description"><?php echo $description; ?></div>
+LINE: 375
+CODE: <ul class="nav nav-tabs">
+LINE: 44
+CODE: <ul class="nav nav-tabs">
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Buy x and get y from category
+CODE: public function getWeight() {
+LINE: 518
+CODE: $this->sortcombination();
+LINE: 329
+LINE: 336
+LINE: 342
+----------------------------------------------------------------
+MOD: Sales Combination 2 : Buy x from category get y
+CODE: public function getWeight() {
+LINE: 586
+CODE: $this->sortcombination();
+LINE: 329
+LINE: 337
+LINE: 344
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
+LINE: 72
+FILE: admin/model/catalog/salescombopge.php
+CODE: public function createTable() {
+LINE: 322
+----------------------------------------------------------------
+MOD: Admin View Catalog ProductForm
+FILE: admin/view/template/catalog/product_form.tpl
+CODE: <button type="button" onclick="addImage();" data-toggle="tooltip" title="<?php echo $button_image_add; ?>" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button>
+LINE: 845
+CODE: function addImage() {
+LINE: 1353
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 253
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+MOD: Offer Pages Creator: Customized Html, Messages, Popup, Pages
+CODE: $data['text_category']
+LINE: 24
+CODE: $data['category']
+LINE: 139
+CODE: $_['text_category']
+LINE: 15
+CODE: $_['text_category']
+LINE: 17
+CODE: <li><a href="<?php echo $information; ?>"><?php echo $text_information; ?></a></li>
+LINE: 21
+FILE: catalog/controller/common/header.php
+CODE: if (isset($this->request->get['route'])) {
+LINE: 296
+CODE: $data['base'] = $server;
+LINE: 161
+CODE: if ($catalog) {
+NOT FOUND!
+FILE: catalog/controller/product/category.php
+CODE: $data['categories'] = array();
+LINE: 178
+FILE: catalog/view/theme/default/template/product/category.tpl
+CODE: <?php if ($categories) { ?>
+LINE: 31
+CODE: <?php echo $footer; ?>
+LINE: 172
+CODE: <?php echo $footer; ?>
+LINE: 195
+FILE: catalog/view/theme/pav_krstore/template/product/category.tpl
+CODE: <?php if ($categories) { ?>
+LINE: 32
+CODE: <?php echo $footer; ?>
+LINE: 94
+CODE: <?php echo $footer; ?>
+LINE: 117
+CODE: $data['discounts'] = array();
+LINE: 398
+CODE: <?php if ($price) { ?>
+LINE: 158
+CODE: <?php echo $footer; ?>
+LINE: 644
+CODE: <?php echo $footer; ?>
+LINE: 667
+CODE: <?php if ($price) { ?>
+LINE: 120
+CODE: <?php echo $footer; ?>
+LINE: 1045
+CODE: <?php echo $footer; ?>
+LINE: 1068
+FILE: catalog/controller/account/account.php
+CODE: $data['text_newsletter'] = $this->language->get('text_newsletter');
+LINE: 61
+FILE: catalog/view/theme/default/template/account/account.tpl
+CODE: <h2><?php echo $text_my_newsletter; ?></h2>
+NOT FOUND!
+FILE: catalog/controller/module/account.php
+CODE: $data['newsletter'] = $this->url->link('account/newsletter', '', 'SSL');
+NOT FOUND!
+FILE: catalog/view/theme/default/template/module/account.tpl
+CODE: <a href="<?php echo $logout; ?>" class="list-group-item"><?php echo $text_logout; ?></a>
+LINE: 24
+FILE: catalog/controller/common/column_left.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/column_right.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/content_bottom.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/content_top.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/startup/seo_url.php
+CODE: if ($url[0] == 'manufacturer_id') {
+LINE: 41
+CODE: $this->request->get['route'] = $query->row['query'];
+LINE: 50
+CODE: } elseif (isset($this->request->get['manufacturer_id'])) {
+LINE: 72
+CODE: } elseif ($key == 'path') {
+LINE: 114
+----------------------------------------------------------------
+2017-12-05 12:21:26 - MOD: Modification Default
+FILE: system/engine/action.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 34
+FILE: system/engine/loader.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 41
+LINE: 92
+LINE: 104
+LINE: 142
+FILE: system/library/config.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 23
+FILE: system/library/language.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 35
+LINE: 41
+LINE: 47
+FILE: system/library/template/basic.php
+REGEX: ~(require|include)(_once)?\(([^)]+)~
+LINE: 18
+----------------------------------------------------------------
+MOD: comrooles
+FILE: system/library/cart/cart.php
+CODE: $this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = (quantity + " . (int)$quantity . ") WHERE customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
+LINE: 307
+CODE: public function getWeight() {
+LINE: 407
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "cart WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+LINE: 317
+CODE: $this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = '" . (int)$quantity . "' WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+LINE: 313
+CODE: $this->weight = $registry->get('weight');
+LINE: 14
+CODE: 'download'        => $download_data,
+LINE: 277
+CODE: if ($product['tax_class_id']) {
+LINE: 444
+CODE: $total += $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'];
+LINE: 469
+CODE: $product_id =  $cart['product_id'];
+LINE: 350
+CODE: $download_data = array();
+LINE: 247
+FILE: catalog/model/checkout/order.php
+CODE: $order_id = $this->db->getLastId();
+LINE: 21
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
+LINE: 84
+FILE: catalog/controller/checkout/cart.php
+CODE: $data['totals'] = array();
+LINE: 245
+FILE: catalog/view/theme/default/template/checkout/cart.tpl
+CODE: <?php if ($success) { ?>
+LINE: 49
+FILE: catalog/controller/checkout/checkout.php
+CODE: $data['shipping_required'] = $this->cart->hasShipping();
+LINE: 93
+FILE: catalog/view/theme/default/template/checkout/checkout.tpl
+CODE: <?php echo $content_top; ?>
+LINE: 28
+CODE: $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+LINE: 142
+FILE: catalog/controller/common/cart.php
+CODE: $total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+LINE: 107
+FILE: catalog/controller/checkout/confirm.php
+CODE: $data['products'][] = array(
+LINE: 406
+CODE: 'total'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']),
+LINE: 417
+FILE: catalog/controller/product/product.php
+CODE: $data['points'] = $product_info['points'];
+LINE: 312
+FILE: catalog/view/theme/default/template/product/product.tpl
+CODE: <li class="active"><a href="#tab-description" data-toggle="tab"><?php echo $tab_description; ?></a></li>
+LINE: 41
+CODE: <div class="tab-pane active" id="tab-description"><?php echo $description; ?></div>
+LINE: 55
+FILE: catalog/view/theme/pav_krstore/template/product/product.tpl
+CODE: <li class="active"><a href="#tab-description" data-toggle="tab"><?php echo $tab_description; ?></a></li>
+LINE: 357
+CODE: <div class="tab-pane active" id="tab-description"><?php echo $description; ?></div>
+LINE: 375
+CODE: <ul class="nav nav-tabs">
+LINE: 44
+CODE: <ul class="nav nav-tabs">
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Buy x and get y from category
+CODE: public function getWeight() {
+LINE: 518
+CODE: $this->sortcombination();
+LINE: 329
+LINE: 336
+LINE: 342
+----------------------------------------------------------------
+MOD: Sales Combination 2 : Buy x from category get y
+CODE: public function getWeight() {
+LINE: 586
+CODE: $this->sortcombination();
+LINE: 329
+LINE: 337
+LINE: 344
+CODE: $this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");
+LINE: 72
+FILE: admin/model/catalog/salescombopge.php
+CODE: public function createTable() {
+LINE: 322
+----------------------------------------------------------------
+MOD: Admin View Catalog ProductForm
+FILE: admin/view/template/catalog/product_form.tpl
+CODE: <button type="button" onclick="addImage();" data-toggle="tooltip" title="<?php echo $button_image_add; ?>" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button>
+LINE: 845
+CODE: function addImage() {
+LINE: 1353
+----------------------------------------------------------------
+MOD: EmailVerification
+FILE: admin/model/customer/customer.php
+CODE: $customer_id = $this->db->getLastId();
+LINE: 15
+FILE: catalog/model/account/customer.php
+CODE: $message = sprintf($this->language->get('text_welcome'), html_entity_decode($this->config->get('config_name'), ENT_QUOTES, 'UTF-8')) . "\n\n";
+LINE: 44
+CODE: if ($this->config->get('config_account_mail')) {
+LINE: 77
+CODE: $message .= $this->url->link('account/login', '', true) . "\n\n";
+LINE: 55
+CODE: $message .= $this->url->link('account/login', '', 'SSL') . "\n\n";
+NOT FOUND!
+FILE: catalog/controller/account/success.php
+CODE: $data['column_left'] = $this->load->controller('common/column_left');
+LINE: 64
+FILE: catalog/controller/account/login.php
+CODE: $this->load->model('account/customer');
+LINE: 20
+FILE: catalog/controller/checkout/register.php
+CODE: if ($customer_group_info && !$customer_group_info['approval']) {
+LINE: 253
+----------------------------------------------------------------
+MOD: Export/Import Tool (V3.11) for OpenCart 2.x
+FILE: admin/controller/common/menu.php
+CODE: $data['text_backup'] = $this->language->get('text_backup');
+LINE: 19
+CODE: $data['backup'] = $this->url->link('tool/backup', 'token=' . $this->session->data['token'],
+LINE: 134
+FILE: admin/language/arabi/common/menu.php
+CODE: $_['text_backup']
+LINE: 9
+FILE: admin/language/en-gb/common/menu.php
+CODE: $_['text_backup']
+LINE: 10
+FILE: admin/view/template/common/menu.tpl
+CODE: <li><a href="<?php echo $backup; ?>"><?php echo $text_backup; ?></a></li>
+LINE: 178
+FILE: admin/controller/common/column_left.php
+CODE: if ($this->user->hasPermission('access', 'tool/log')) {
+NOT FOUND!
+----------------------------------------------------------------
+MOD: Installation without FTP settings
+FILE: admin/controller/extension/installer.php
+CODE: $data['button_continue'] =
+LINE: 26
+CODE: 'extension/installer/ftp'
+LINE: 137
+CODE: function ftp(
+LINE: 302
+CODE: if (!$this->config->get('config_ftp_status')
+LINE: 320
+FILE: admin/language/en-gb/extension/installer.php
+CODE: $_['text_clear']
+LINE: 16
+FILE: admin/view/template/extension/installer.tpl
+CODE: <form class="form
+LINE: 39
+CODE: timer = setInterval(
+LINE: 92
+CODE: n next()
+LINE: 161
+CODE: 'path=' + data.path
+LINE: 172
+----------------------------------------------------------------
+MOD: Offer Pages Creator: Customized Html, Messages, Popup, Pages
+CODE: $data['text_category']
+LINE: 24
+CODE: $data['category']
+LINE: 139
+CODE: $_['text_category']
+LINE: 15
+CODE: $_['text_category']
+LINE: 17
+CODE: <li><a href="<?php echo $information; ?>"><?php echo $text_information; ?></a></li>
+LINE: 21
+FILE: catalog/controller/common/header.php
+CODE: if (isset($this->request->get['route'])) {
+LINE: 296
+CODE: $data['base'] = $server;
+LINE: 161
+CODE: if ($catalog) {
+NOT FOUND!
+FILE: catalog/controller/product/category.php
+CODE: $data['categories'] = array();
+LINE: 178
+FILE: catalog/view/theme/default/template/product/category.tpl
+CODE: <?php if ($categories) { ?>
+LINE: 31
+CODE: <?php echo $footer; ?>
+LINE: 172
+CODE: <?php echo $footer; ?>
+LINE: 195
+FILE: catalog/view/theme/pav_krstore/template/product/category.tpl
+CODE: <?php if ($categories) { ?>
+LINE: 32
+CODE: <?php echo $footer; ?>
+LINE: 94
+CODE: <?php echo $footer; ?>
+LINE: 117
+CODE: $data['discounts'] = array();
+LINE: 398
+CODE: <?php if ($price) { ?>
+LINE: 158
+CODE: <?php echo $footer; ?>
+LINE: 644
+CODE: <?php echo $footer; ?>
+LINE: 667
+CODE: <?php if ($price) { ?>
+LINE: 120
+CODE: <?php echo $footer; ?>
+LINE: 1045
+CODE: <?php echo $footer; ?>
+LINE: 1068
+FILE: catalog/controller/account/account.php
+CODE: $data['text_newsletter'] = $this->language->get('text_newsletter');
+LINE: 61
+FILE: catalog/view/theme/default/template/account/account.tpl
+CODE: <h2><?php echo $text_my_newsletter; ?></h2>
+NOT FOUND!
+FILE: catalog/controller/module/account.php
+CODE: $data['newsletter'] = $this->url->link('account/newsletter', '', 'SSL');
+NOT FOUND!
+FILE: catalog/view/theme/default/template/module/account.tpl
+CODE: <a href="<?php echo $logout; ?>" class="list-group-item"><?php echo $text_logout; ?></a>
+LINE: 24
+FILE: catalog/controller/common/column_left.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/column_right.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/content_bottom.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/common/content_top.php
+CODE: if ($route == 'information/information' && isset($this->request->get['information_id'])) {
+LINE: 33
+FILE: catalog/controller/startup/seo_url.php
+CODE: if ($url[0] == 'manufacturer_id') {
+LINE: 41
+CODE: $this->request->get['route'] = $query->row['query'];
+LINE: 50
+CODE: } elseif (isset($this->request->get['manufacturer_id'])) {
+LINE: 72
+CODE: } elseif ($key == 'path') {
+LINE: 114
+----------------------------------------------------------------

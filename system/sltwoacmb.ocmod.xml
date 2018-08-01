@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+  <name>Buy x and get y from category</name>
+  <code>sc2buyxandgetyct</code>
+  <version>4.1</version>
+  <author>cartbinder.com</author>
+  <link>http://store.cartbinder.com</link>
+  <file path="system/library/cart/cart.php">
+    <operation>
+      <search><![CDATA[public function getWeight() {]]>
+      </search><add position="before"><![CDATA[
+      public function salesonecombo2a(){
+      if(isset($this->session->data['slscmdctgs']) && !empty($this->session->data['slscmdctgs']) && isset($this->session->data['slscmdctgscids']) && !empty($this->session->data['slscmdctgscids'])){
+          //$this->log->write("categoryconditionexist"); $this->log->write(print_r($this->session->data['slscmdctgs'],true));$this->log->write(print_r($this->session->data['slscmdprdts'],true));
+          $version = str_replace(".","",VERSION);
+          $query = $this->db->query("SELECT  * FROM " . DB_PREFIX . "cartbindercombo2a_setting WHERE status = '1'");
+          foreach($query->rows as $step => $destination) {
+          $primarycarray = array();$primarycrtarray = array();
+          $primaryarray = explode(",",$destination['primarycids']);
+          //$this->log->write("primaryarray");$this->log->write(print_r($primaryarray,true));
+          //$this->log->write("primaryarray");$this->log->write(print_r($primaryarray,true));
+          //$this->log->write("category with quantity");$this->log->write(print_r($this->session->data['slscmdctgscids'],true));
+          if($this->checkCg($destination['cids'])) {continue;}
+            if(!$destination['anyorall']) {
+            foreach($primaryarray as $key => $value){if(!array_key_exists($value,$this->session->data['slscmdctgscids'])) {
+               //$this->log->write("break from primary");
+               continue 2;
+            }}}
+            if($version > 2100) {
+              $cart_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "cart WHERE customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+                foreach ($cart_query->rows as $cart) {
+                  if(isset($this->session->data['slscmdctgs'][$cart['product_id']])) {
+                    foreach($this->session->data['slscmdctgs'][$cart['product_id']] as $key => $value) {
+                      if(in_array($value,$primaryarray)  && isset($this->session->data['slscmdctgscids'][$value])) {
+                        $primarycarray[$value] = $this->session->data['slscmdctgscids'][$value];
+                        $primarycrtarray[$cart['cart_id']] = $cart['quantity'];
+                      }
+                    }
+                  }
+                }
+              } else {
+                foreach ($this->session->data['cart'] as $key => $quantity) {
+                  $product = unserialize(base64_decode($key));
+                  $product_id = $product['product_id'];
+                  if(isset($this->session->data['slscmdctgs'][$product_id])) {
+                    foreach($this->session->data['slscmdctgs'][$product_id] as $key1 => $value) {
+                      if(in_array($value,$primaryarray)  && isset($this->session->data['slscmdctgscids'][$value])) {
+                       $primarycarray[$value] = $this->session->data['slscmdctgscids'][$value];
+                        $primarycrtarray[] = $key;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            if(!count($primarycrtarray)) { continue;}
+            if($destination['anyorall']) {
+              $totalprimaryquantity = array_sum($primarycrtarray);
+            } else {
+              $totalprimaryquantity = min($primarycrtarray);
+            }
+            if($totalprimaryquantity < $destination['primaryquant']) { continue; }
+            $commonseocndaryquantity = $totalprimaryquantity;
+
+            //$netquantity2 = floor($commonseocndaryquantity/($destination['primaryquant']+$destination['secondaryquant']));
+            $netquantity2 = $this->xnfrmla($commonseocndaryquantity,$destination['primaryquant'],$destination['secondaryquant']);
+            $i = 0;if($netquantity2 >= 0) {$i = 1;}
+            //$this->log->write("net quantity".$netquantity2);
+            $spprtsimproopt = array();$temp  = $netquantity2;$quantityapply = $temp;
+            if($version > 2100) {$cart_query = $this->db->query("SELECT c.cart_id,c.quantity,c.product_id FROM " . DB_PREFIX . "cart c LEFT JOIN " . DB_PREFIX . "product p ON (p.product_id = c.product_id) WHERE c.customer_id = '" . (int)$this->customer->getId() . "' AND c.session_id = '" . $this->db->escape($this->session->getId()) . "' ORDER BY p.price ASC");
+              foreach ($cart_query->rows as $cart) {
+                if(!isset($this->session->data['cartbindercombooffers'][$cart['cart_id']]) && array_key_exists($cart['cart_id'], $primarycrtarray) && ($quantityapply > 0)) {
+                    $temp = $quantityapply;$i =0;$this->session->data['cartbindercombooffers_offerapplied'][] = $destination['sales_offer_id'];
+                    $quantityapply = $quantityapply - $cart['quantity'];
+                    //$this->log->write("Quantity apply : ".$quantityapply."Temp : ".$temp."cart : ".$cart['quantity']);
+                    $this->session->data['cartbindercombooffers'][$cart['cart_id']] = $destination;
+                    if($quantityapply >= 0) {$this->session->data['cartbindercombooffers'][$cart['cart_id']]['quantity'] = $cart['quantity'];} else {$this->session->data['cartbindercombooffers'][$cart['cart_id']]['quantity'] = $temp;}
+                    if($quantityapply < 0) {break;}
+                }
+              }
+            } else {
+              $this->session->data['tempcart'] = array();
+              $products = $this->getProducts();
+              foreach ($products as $product) {
+                $this->session->data['tempcart'][$product['key']] = $product['price'];
+              }
+              asort( $this->session->data['tempcart']);
+              foreach ($this->session->data['tempcart'] as $key => $price) {
+              $quantity = $this->session->data['cart'][$key];
+              if(!isset($this->session->data['cartbindercombooffers'][$key]) && in_array($key, $primarycrtarray) && ($quantityapply > 0)) {
+                $temp = $quantityapply;$quantityapply = $quantityapply - $quantity;$i =0;
+                $this->session->data['cartbindercombooffers_offerapplied'][] = $destination['sales_offer_id'];
+               // $this->log->write("Quantity apply : ".$quantityapply."Temp : ".$temp);
+                $this->session->data['cartbindercombooffers'][$key] =  $destination;if($quantityapply >= 0) {$this->session->data['cartbindercombooffers'][$key]['quantity'] = $quantity;} else {$this->session->data['cartbindercombooffers'][$key]['quantity'] = $temp;}
+                if($quantityapply < 0) {break;}
+                }}}if($i){$this->session->data['cartbindercombooffers_pages'][] = $destination['sales_offer_id'];}}}}
+    ]]></add>
+    </operation>
+    <operation>
+      <search><![CDATA[$this->sortcombination();]]>
+      </search><add position="after"><![CDATA[$this->salesonecombo2a();]]>
+      </add>
+    </operation>
+  </file>
+</modification>

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+  <name>comrooles</name>
+  <code>corerules</code>
+  <version>1.0</version>
+  <author>cartbinder.com</author>
+  <link>http://store.cartbinder.com</link>
+  <file path="system/library/cart/cart.php">
+     <operation>
+    <search><![CDATA[$this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = (quantity + " . (int)$quantity . ") WHERE customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");]]>
+    </search>
+    <add position="after"><![CDATA[ }if(1){$this->sortcombination();]]>
+    </add>
+    </operation>
+    <operation>
+    <search><![CDATA[public function getWeight() {]]>
+    </search><add position="before"><![CDATA[public function sortcombination(){
+      //$this->log->write("insortcombination");
+      unset($this->session->data['cartbindercombooffers']);
+      $this->session->data['cartbindercombooffers_pages'] = array();
+      $this->session->data['cartbindercombooffers_offerapplied'] = array();
+      $this->session->data['slscmdprdts'] = array();$this->session->data['slscmdctgs'] = array();$this->session->data['slscmdctgscids'] = array();$version = str_replace(".","",VERSION);if($version > 2100) {
+        $cart_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "cart WHERE customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+        foreach ($cart_query->rows as $cart) {
+        $product_id =  $cart['product_id'];
+        if (!isset($this->session->data['slscmdprdts'][$product_id])) {$this->session->data['slscmdprdts'][$product_id] = (int)$cart['quantity'];} else {$this->session->data['slscmdprdts'][$product_id] += (int)$cart['quantity'];}} } else {$productsincart = $this->session->data['cart'];
+        foreach ($productsincart as $key => $quantity) {$product = unserialize(base64_decode($key));
+        $product_id =  $product['product_id'];
+        if (!isset($this->session->data['slscmdprdts'][$product_id])) {$this->session->data['slscmdprdts'][$product_id] = (int)$quantity;} else {$this->session->data['slscmdprdts'][$product_id] += (int)$quantity;}} }
+        }
+
+        public function getcategories($product_id,$quantity) {
+      $queries = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "'");
+
+      foreach ($queries->rows as $result) {
+          $this->session->data['slscmdctgs'][$product_id][] = $result['category_id'];
+          if(isset($this->session->data['slscmdctgscids'][$result['category_id']])) {
+            $this->session->data['slscmdctgscids'][$result['category_id']] += $quantity;
+          } else {
+            $this->session->data['slscmdctgscids'][$result['category_id']] = $quantity;
+          }
+      }
+    }
+     public function checkcondition($product_id,$secondaryarray,$secondarycarray) {
+      if(in_array($product_id,$secondaryarray))  {
+        return 1;
+      }
+      if(isset($this->session->data['slscmdctgs'][$product_id])) {
+        foreach($this->session->data['slscmdctgs'][$product_id] as $key => $value) {
+          if(in_array($value,$secondarycarray)) {
+            return 1;
+          }
+        }
+      }
+      return 0;
+    }
+    public function checkcondition2($product_id,$secondarycarray) {
+      if(isset($this->session->data['slscmdctgs'][$product_id])) {
+        foreach($this->session->data['slscmdctgs'][$product_id] as $key => $value) {
+          if(in_array($value,$secondarycarray)) {
+            return 1;
+          }
+        }
+      }
+      return 0;
+    }
+     public function checkCg($cids = array()) {
+  $cggrup = json_decode($cids,true);
+      if(!empty($cggrup)) {
+        $cgid = $this->customer->getGroupId();
+        if(!in_array($cgid, $cggrup)) {
+           return 1;
+        }
+      }
+      return 0;
+    }
+     public function xnfrmla($tn,$pq,$sq) {
+        $sm = $pq + $sq;
+        $answer = floor( $tn / $sm );
+        $bq = ($answer * $sm) + $pq;
+        $uq = ($answer * $sm) + $sm;
+        $min = min($tn,$uq);
+        $dyn = $min - $bq;
+        if($dyn < 0){$dyn = 0;}
+        $fq = $answer * $sq;
+        return $fq + $dyn;
+    }
+      ]]>
+      </add></operation>
+      <operation><search><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "cart WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");]]></search><add position="after"><![CDATA[$this->sortcombination();]]></add>
+    </operation>
+    <operation><search><![CDATA[$this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = '" . (int)$quantity . "' WHERE cart_id = '" . (int)$cart_id . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");]]></search><add position="after"><![CDATA[$this->sortcombination();]]></add>
+    </operation>
+    <operation><search><![CDATA[$this->weight = $registry->get('weight');]]></search><add position="after"><![CDATA[if (!isset($this->session->data['slscmdprdts']) || !is_array($this->session->data['slscmdprdts'])) {$this->session->data['slscmdprdts'] = array();}
+     if (!isset($this->session->data['cartbindercombooffers']) || !is_array($this->session->data['cartbindercombooffers'])) { $this->session->data['cartbindercombooffers'] = array(); }
+      ]]></add></operation>
+     <operation>
+      <search><![CDATA['download'        => $download_data,]]>
+      </search><add position="after"><![CDATA['salecombinationquantity' => $salecombinationquantity,]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[if ($product['tax_class_id']) {]]>
+      </search><add position="after"><![CDATA[
+      if(isset($product['salecombinationquantity'])) {
+        $product['quantity'] = $product['salecombinationquantity'];
+      }
+      ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[$total += $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'];]]>
+      </search><add position="before"><![CDATA[
+      if(isset($product['salecombinationquantity'])) {
+        $product['quantity'] = $product['salecombinationquantity'];
+      }
+      ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[$product_id =  $cart['product_id'];]]>
+      </search><add position="after"><![CDATA[$this->getcategories($product_id,$cart['quantity']);]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[$download_data = array();]]>
+      </search><add position="before"><![CDATA[
+      $version = str_replace(".","",VERSION);if($version > 2100) {$key = $cart['cart_id'];$netquantity2 = $salecombinationquantity = $cart['quantity'];} else {$netquantity2 = $salecombinationquantity = $quantity;}
+      $salecombination2price = 0;
+      if(isset($this->session->data['cartbindercombooffers'][$key])) {
+        //$this->log->write(print_r($this->session->data['cartbindercombooffers'],true));
+        $ogquantity = $netquantity2;$netquantity2 = $netquantity2 - intval($this->session->data['cartbindercombooffers'][$key]['quantity']);$salecombinationquantity = intval($this->session->data['cartbindercombooffers'][$key]['quantity']);
+        $netnewprice = $price + $option_price;
+        if($this->session->data['cartbindercombooffers'][$key]['type']){$salecombination2price = ($netnewprice - $this->session->data['cartbindercombooffers'][$key]['discount'])/$netnewprice;} else {
+        $salecombination2price = (100 - $this->session->data['cartbindercombooffers'][$key]['discount'])/100;}
+        //$this->log->write("salecombinationprice: ".$salecombination2price);$this->log->write("salecombinationquantity: ".$salecombinationquantity);
+        $salecombinationquantity =  $netquantity2 + ($salecombinationquantity * $salecombination2price);
+        $discountdone = ($netnewprice * $ogquantity) - ($netnewprice * $salecombinationquantity);
+        $this->session->data['cartbindercombooffers'][$key]['discountdone'] = $discountdone;
+        //$this->log->write("price".$price."---ogquantity".$ogquantity);
+        //$this->log->write(print_r($this->session->data['cartbindercombooffers'],true));
+      }
+      ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/model/checkout/order.php">
+   <operation>
+      <search><![CDATA[$order_id = $this->db->getLastId();]]>
+      </search><add position="after"><![CDATA[
+      $version = str_replace(".","",VERSION);foreach ($this->cart->getProducts() as $product) {if($version > 2100) {$key = $product['cart_id'];} else {$key = $product['key'];}if(isset($this->session->data['cartbindercombooffers'][$key])) {$offerdetails = $this->session->data['cartbindercombooffers'][$key];$type = ($this->session->data['cartbindercombooffers'][$key]['type'])?"Fixed":"Percentage";
+      if($this->session->data['cartbindercombooffers'][$key]['variation'] == 1) {
+        $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1 SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' ,secondarypids = '".$offerdetails['secondarypids']."',discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 2) {
+        $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo2 SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarycids = '".$offerdetails['primarycids']."' ,secondarypids = '".$offerdetails['secondarypids']."',secondarycids = '".$offerdetails['secondarycids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 3) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1a SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+     } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 4) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo2a SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarycids = '".$offerdetails['primarycids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 5) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1b SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' , secondarycids = '".$offerdetails['secondarycids']."' , discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 6) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1c SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' , optionids = '".$offerdetails['optionids']."' , discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      }
+      }}]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "order_product WHERE order_id = '" . (int)$order_id . "'");]]>
+      </search><add position="after"><![CDATA[
+      $version = str_replace(".","",VERSION);foreach ($this->cart->getProducts() as $product) {if($version > 2100) {$key = $product['cart_id'];} else {$key = $product['key'];}if(isset($this->session->data['cartbindercombooffers'][$key])) {$offerdetails = $this->session->data['cartbindercombooffers'][$key];$type = ($this->session->data['cartbindercombooffers'][$key]['type'])?"Fixed":"Percentage";
+      if($this->session->data['cartbindercombooffers'][$key]['variation'] == 1) {
+        $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1 SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' ,secondarypids = '".$offerdetails['secondarypids']."',discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 2) {
+        $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo2 SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarycids = '".$offerdetails['primarycids']."' ,secondarypids = '".$offerdetails['secondarypids']."',secondarycids = '".$offerdetails['secondarycids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 3) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1a SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+     } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 4) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo2a SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarycids = '".$offerdetails['primarycids']."' ,discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 5) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1b SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' , secondarycids = '".$offerdetails['secondarycids']."' , discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      } else if($this->session->data['cartbindercombooffers'][$key]['variation'] == 6) {
+         $this->db->query("INSERT INTO " . DB_PREFIX . "cartbindercombo1c SET order_id = '" . (int)$order_id . "',offer_id = '" . (int)$offerdetails['id'] . "', customer_id = '" . (int)$this->customer->getId() . "', type = '" . $type . "',name = '" . $offerdetails['name'] . "', primarypids = '".$offerdetails['primarypids']."' , optionids = '".$offerdetails['optionids']."' , discount = '".$offerdetails['discount']."',total = '" . (float)$offerdetails['discountdone'] . "'");
+      }
+      }}]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/controller/checkout/cart.php">
+    <operation>
+      <search><![CDATA[$data['totals'] = array();]]>
+      </search>
+      <add position="after"><![CDATA[ 
+        $data['eligibleoffers']['success'] = array(); $data['eligibleoffers']['warning'] = array();
+         if((isset($this->session->data['cartbindercombooffers_pages']) && !empty($this->session->data['cartbindercombooffers_pages'])) || (isset($this->session->data['cartbindercombooffers_offerapplied']) && !empty($this->session->data['cartbindercombooffers_offerapplied'])))  {
+          $this->load->model("tool/salescombo");
+          $data['eligibleoffers'] = $this->model_tool_salescombo->total();
+       }
+        ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/view/theme/*/template/checkout/cart.tpl">
+    <operation>
+      <search><![CDATA[<?php if ($success) { ?>]]>
+      </search>
+      <add position="before"><![CDATA[
+        <?php foreach($eligibleoffers['success'] as $key => $message) { ?>
+          <div class="alert messagestripsuccess"><i class="fa fa-check-circle"></i> <?php echo $message; ?>
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        <?php } ?>
+         <?php foreach($eligibleoffers['warning'] as $key => $message) { ?>
+          <div class="alert messagestripwarning"><i class="fa fa-check-circle"></i> <?php echo $message; ?>
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        <?php } ?>
+        ]]>
+      </add>
+    </operation>
+  </file>
+   <file path="catalog/controller/checkout/checkout.php">
+    <operation>
+      <search><![CDATA[$data['shipping_required'] = $this->cart->hasShipping();]]>
+      </search>
+      <add position="after"><![CDATA[ 
+          $data['eligibleoffers']['warning'] = array();
+         if((isset($this->session->data['cartbindercombooffers_pages']) && !empty($this->session->data['cartbindercombooffers_pages'])) || (isset($this->session->data['cartbindercombooffers_offerapplied']) && !empty($this->session->data['cartbindercombooffers_offerapplied'])))  {
+          $this->load->model("tool/salescombo");
+          $data['eligibleoffers'] = $this->model_tool_salescombo->total();
+       }
+        ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/view/theme/*/template/checkout/checkout.tpl">
+    <operation>
+      <search><![CDATA[<?php echo $content_top; ?>]]>
+      </search>
+      <add position="after"><![CDATA[
+         <?php foreach($eligibleoffers['warning'] as $key => $message) { ?>
+          <div class="alert messagestripwarning"><i class="fa fa-check-circle"></i> <?php echo $message; ?>
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        <?php } ?>
+        ]]>
+      </add>
+    </operation>
+  </file>
+
+  <file path="catalog/controller/checkout/cart.php">
+   <operation>
+      <search><![CDATA[$total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);]]>
+      </search><add position="after"><![CDATA[
+      if(isset($product['salecombinationquantity']) && ($product['salecombinationquantity'] != $product['quantity'])) {
+         $total_new = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['salecombinationquantity'], $this->session->data['currency']);
+         $total = "<span style='text-decoration: line-through;'>".$total."</span>&nbsp;".$total_new;
+      }
+      ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/controller/common/cart.php">
+   <operation>
+      <search><![CDATA[$total = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);]]>
+      </search><add position="after"><![CDATA[
+      if(isset($product['salecombinationquantity']) && ($product['salecombinationquantity'] != $product['quantity'])) {
+         $total_new = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['salecombinationquantity'], $this->session->data['currency']);
+         $total = "<span style='text-decoration: line-through;'>".$total."</span>&nbsp;".$total_new;
+      }
+      ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/controller/checkout/confirm.php">
+    <operation>
+      <search><![CDATA[$data['products'][] = array(]]>
+      </search><add position="before"><![CDATA[
+      $actualtotal  = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']);
+      if(isset($product['salecombinationquantity']) && ($product['salecombinationquantity'] != $product['quantity'])) {
+         $total_new = $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['salecombinationquantity'], $this->session->data['currency']);
+         $actualtotal = "<span style='text-decoration: line-through;'>".$actualtotal."</span>&nbsp;".$total_new;
+      }
+      ]]>
+      </add>
+    </operation>
+   <operation>
+      <search><![CDATA['total'      => $this->currency->format($this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'], $this->session->data['currency']),]]>
+      </search><add position="replace"><![CDATA[
+      'total'      => $actualtotal,
+      ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="catalog/controller/product/product.php">
+    <operation>
+      <search><![CDATA[$data['points'] = $product_info['points'];]]>
+      </search>
+      <add position="before"><![CDATA[
+        $this->load->model("total/salescombo");
+        $data['available_offers'] = $this->model_total_salescombo->getAvailableOffers($this->request->get['product_id']);
+        $this->load->language("total/salescombo");
+        $data['tab_available_offers'] = $this->language->get("tab_available_offers");
+        $data['text_available_offers'] = $this->language->get("text_available_offers");
+        ]]>
+      </add>
+    </operation>
+  </file>
+   <file path="catalog/view/theme/*/template/product/product.tpl">
+    <operation>
+      <search><![CDATA[<li class="active"><a href="#tab-description" data-toggle="tab"><?php echo $tab_description; ?></a></li>]]>
+      </search>
+      <add position="after">
+        <![CDATA[
+        <?php if(isset($available_offers['tab']) && $available_offers['tab']) { ?>
+        <li><a href="#tab-available-offers" data-toggle="tab"><?php echo $tab_available_offers; ?></a></li>
+        <?php } ?>
+        ]]></add>
+    </operation>
+    <operation>
+      <search><![CDATA[<div class="tab-pane active" id="tab-description"><?php echo $description; ?></div>]]>
+      </search>
+      <add position="after">
+        <![CDATA[
+        <?php if(isset($available_offers['tab']) && $available_offers['tab']) { ?>
+        <div class="tab-pane" id="tab-available-offers"><?php echo $available_offers['tab']; ?></div>
+        <?php } ?>
+        ]]></add>
+    </operation>
+  </file>
+  <file path="catalog/view/theme/*/template/product/product.tpl">
+    <operation>
+      <search><![CDATA[<ul class="nav nav-tabs">]]>
+      </search>
+      <add position="before">
+        <![CDATA[
+        <?php if(isset($available_offers['notab']) && $available_offers['notab']) { ?>
+        <div class="offer_header">
+         <span class="availableoffer_header"><?php echo $text_available_offers; ?></span>
+         <span class="availableoffer_headerafter"></span>
+        </div>
+        <?php echo $available_offers['notab']; ?>
+        <?php } ?>
+        ]]></add>
+    </operation>
+  </file>
+</modification>

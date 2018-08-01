@@ -1,0 +1,7 @@
+<extension>
+    <id>social_login_free</id>
+    <name>Social Login Free</name>
+    <description>Social login free is a module that addes the ability to create an account with a scoial network account like Facebook, Google+, Twitter, Linkeding.</description>
+    <type>module</type>
+    <description>Adds social login buttons to your opencart store</description>
+</extension>
