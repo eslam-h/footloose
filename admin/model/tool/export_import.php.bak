@@ -1,0 +1,1394 @@
+<?php
+require 'export_import_legacy.php';
+
+// A gateway used for imports and exports that allows us to adapt excel sheet data to the format accepted by the import/export extension.
+class ModelToolExportImport extends ModelToolExportImportLegacy
+// {
+//
+// }
+
+{
+    private $categories_index = 0;
+    private $categories_filter_index = 1;
+    private $products_index = 0;
+    private $products_additional_images_index = 1;
+    private $products_options_index = 2;
+    private $products_option_values_index = 3;
+    private $products_skus_index = 4;
+    private $options_index = 0;
+    private $option_values_index = 1;
+
+    private $category_delimeter = '>>';
+
+    private $brand_column = 'A';
+    private $category_column = 'L';
+    private $gender_column = 'M';
+    private $name_column = 'D';
+    private $price_column = 'H';
+    private $description_column = 'O';
+
+    private $i = 0;
+
+    // TODO: override the upload function.
+    public function upload($filename, $incremental=false)
+    {
+
+        // -----------------------------------------
+          // FIXME: memory exhaustion.
+
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 100);
+        // -----------------------------------------
+
+        // we use our own error handler
+        global $registry;
+        $registry = $this->registry;
+        set_error_handler('error_handler_for_export_import', E_ALL);
+        register_shutdown_function('fatal_error_shutdown_handler_for_export_import');
+
+        try {
+            $this->session->data['export_import_nochange'] = 1;
+
+          // we use the PHPExcel package from http://phpexcel.codeplex.com/
+          $cwd = getcwd();
+            chdir(DIR_SYSTEM.'PHPExcel');
+            require_once('Classes/PHPExcel.php');
+            chdir($cwd);
+
+          // Memory Optimization
+          if ($this->config->get('export_import_settings_use_import_cache')) {
+              $cacheMethod = PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp;
+              $cacheSettings = array( ' memoryCacheSize '  => '16MB'  );
+              PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
+          }
+
+          // parse uploaded spreadsheet file.
+          $inputFileType = PHPExcel_IOFactory::identify($filename);
+          $objReader = PHPExcel_IOFactory::createReader($inputFileType);
+          $reader = $objReader->load($filename);
+          $readers = $this->adapt_reader($reader);
+          $objReader->setReadDataOnly(true);
+
+          // read the various worksheets and load them to the database
+          if (!$this->validateIncrementalOnly($reader, $incremental)) {
+              return false;
+          }
+            if (!$this->validateUpload($reader)) {
+                return false;
+            }
+          $this->clearCache();
+          $this->session->data['export_import_nochange'] = 0;
+          $available_product_ids = array();
+          $available_category_ids = array();
+          $available_customer_ids = array();
+
+          // --------------------------------------------------------------------------------------------------
+          // // download the excel sheet.
+          // header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          // header('Content-Disposition: attachment;filename=temo_name.xlsx');
+          // header('Cache-Control: max-age=0');
+          // $objWriter = PHPExcel_IOFactory::createWriter($readers[2], 'Excel2007');
+          // $objWriter->setPreCalculateFormulas(false);
+          // $objWriter->save('php://output');
+          //
+          // // Clear the spreadsheet caches
+          // $this->clearSpreadsheetCache();
+          // exit;
+          // --------------------------------------------------------------------------------------------------
+
+          foreach ($readers as $reader) {
+              $this->uploadCategories($reader, $incremental, $available_category_ids);
+              $this->uploadCategoryFilters($reader, $incremental, $available_category_ids);
+              $this->uploadProducts($reader, $incremental, $available_product_ids);
+              $this->uploadAdditionalImages($reader, $incremental, $available_product_ids);
+              $this->uploadSpecials($reader, $incremental, $available_product_ids);
+              $this->uploadDiscounts($reader, $incremental, $available_product_ids);
+              $this->uploadRewards($reader, $incremental, $available_product_ids);
+              $this->uploadProductOptions($reader, $incremental, $available_product_ids);
+              $this->uploadProductOptionValues($reader, $incremental, $available_product_ids);
+              $this->uploadProductAttributes($reader, $incremental, $available_product_ids);
+              $this->uploadProductFilters($reader, $incremental, $available_product_ids);
+              $this->uploadOptions($reader, $incremental);
+              $this->uploadOptionValues($reader, $incremental);
+              $this->uploadAttributeGroups($reader, $incremental);
+              $this->uploadAttributes($reader, $incremental);
+              $this->uploadFilterGroups($reader, $incremental);
+              $this->uploadFilters($reader, $incremental);
+              $this->uploadCustomers($reader, $incremental, $available_customer_ids);
+              $this->uploadAddresses($reader, $incremental, $available_customer_ids);
+        }
+          return true;
+        } catch (Exception $e) {
+            $errstr = $e->getMessage();
+            $errline = $e->getLine();
+            $errfile = $e->getFile();
+            $errno = $e->getCode();
+            $this->session->data['export_import_error'] = array( 'errstr'=>$errstr, 'errno'=>$errno, 'errfile'=>$errfile, 'errline'=>$errline );
+            if ($this->config->get('config_error_log')) {
+                $this->log->write('PHP ' . get_class($e) . ':  ' . $errstr . ' in ' . $errfile . ' on line ' . $errline);
+            }
+            return false;
+        }
+    }
+
+    private function adapt_reader(&$reader)
+    {
+        // TODO: create multiple writers for the categories, products and options.
+        $categories_writer = new PHPExcel();
+        $options_writer = new PHPExcel();
+        $products_writer = new PHPExcel();
+        $reader->setActiveSheetIndex(0);
+        $read_sheet = $reader->getActiveSheet();
+
+        // prepare the needed data.
+        $categories_data = array();     // categories from the database.
+        $derived_categories_data = array();
+        $products_data = array();       // products data from the excel sheet.
+        $derived_products_data = array();
+
+        $sql  = "SELECT c.category_id, c.parent_id, cd.name ";
+        $sql .= "FROM `".DB_PREFIX."category` c ";
+        $sql .= "LEFT JOIN `".DB_PREFIX."category_description` cd ON cd.category_id=c.category_id ";
+        $sql .= "GROUP BY c.`category_id` ";
+        $sql .= "ORDER BY c.`category_id` ASC ;";
+        $query_result = $this->db->query($sql)->rows;
+        foreach ($query_result as $category_row) {
+            $categories_data[$category_row['category_id']] = $category_row;
+        }
+
+        $options = $this->getOptionIds();
+        $option_values = $this->getOptionValueIds();
+        $derived_categories_data = $this->derive_catrgories_data($categories_data);
+
+        $this->create_categories_sheet($categories_writer);
+        $this->create_options_sheet($options_writer);
+        $this->create_option_values_sheet($options_writer);
+        $this->create_products_sheet($products_writer);
+        $this->create_additional_images_sheet($products_writer);
+        $this->create_product_options_sheet($products_writer);
+        $this->create_product_option_values_sheet($products_writer);
+        $this->create_product_skus_sheet($products_writer);
+
+        // TODO: create the products_skus sheet
+        // TODO: create the products_discounts sheet
+
+        end($categories_data);
+        $max_category_id = key($categories_data)? key($categories_data) : 1;
+        $max_row = $read_sheet->getHighestRow();
+
+        list($color_option_id, $size_option_id) = $this->adapt_options($options, $options_writer);
+        $max_option_value_id = $this->get_last_option_value_id();
+        // FIXME: When uploading the whole excel sheet you'd an product_option_value
+        //        not defined error even if you're not updating products not product optoins.
+
+        for ($i = 2; $i<= $max_row; $i++) {
+            $fl_product_id = $read_sheet->getCellByColumnAndRow(1, $i)->getValue();
+            $product_id = $this->adapt_product_id($fl_product_id, $product_data);
+            $sku = $read_sheet->getCellByColumnAndRow(2, $i)->getValue();
+            $quantity = $read_sheet->getCellByColumnAndRow(13, $i)->getValue();
+            $price = $read_sheet->getCellByColumnAndRow(7, $i)->getValue();
+            $discount_percentage = $read_sheet->getCellByColumnAndRow(8, $i)->getValue();
+            $discount_value = $read_sheet->getCellByColumnAndRow(9, $i)->getValue();
+            $color = strtolower(trim($read_sheet->getCellByColumnAndRow(4, $i)->getValue()));
+            $size = trim($read_sheet->getCellByColumnAndRow(5, $i)->getValue());
+
+            $product_data[$product_id][$sku]['discount_percentage'] = $discount_percentage;
+            $product_data[$product_id][$sku]['price'] = $price;
+            $product_data[$product_id][$sku]['discount_value'] = $discount_value;
+
+            if (!isset($option_values[$color_option_id][$color])){
+              # adapt the new color option value.
+
+              $this->adapt_option_value($color_option_id, $color,
+                                        $option_values, $max_option_value_id,
+                                        $options_writer);
+            }
+            if (!isset($option_values[$size_option_id][$size])){
+              # adapt the new size optoin value.
+              $this->adapt_option_value($size_option_id, $size,
+              $option_values, $max_option_value_id,
+              $options_writer);
+            }
+            $this->adapt_product_detailed_sku($product_id, $sku,
+                                              $color, $size,
+                                              $products_writer);
+
+
+
+            if (array_key_exists((string) $fl_product_id, $products_data)) {
+                // adapt product variation.
+                $price_difference = $price - $products_data[(string) $fl_product_id]['init_price'];
+                $derived_products_data[$product_id]['quantity'] += $quantity;
+                $price_prefix = '+';
+                if ($price_difference < 0)
+                {
+                  $price_prefix = '-';
+                }
+                $substract = 'true';
+                $points = 0;
+                $points_prefix = '+';
+                $weight = '0.0';
+                $weight_prefix = '+';
+
+                $this->adapt_product_color_option_value($product_id, $color,
+                                                        $quantity, $price_difference,
+                                                        $products_writer, $derived_products_data);
+                $this->adapt_product_size_option_value($product_id, $size,
+                                                      $color, $quantity,
+                                                      0, $products_writer,
+                                                      $derived_products_data);
+
+            } else {
+                // adapt a product data.
+                $brand = $read_sheet->getCell($this->brand_column.$i)->getValue();
+                $gender = $read_sheet->getCell($this->gender_column.$i)->getValue();
+                $category = $read_sheet->getCell($this->category_column.$i)->getValue();
+                $name = $read_sheet->getCell($this->name_column.$i)->getValue();
+                $description = $read_sheet->getCell($this->description_column.$i)->getValue();
+
+                $category_ids = $this->adapt_category($brand, $gender,
+                                                      $category, $derived_categories_data,
+                                                      $max_category_id, $categories_writer);
+                $category_ids = implode(', ', $category_ids);
+
+                $this->adapt_product($fl_product_id, $product_id,
+                                    $name, $category_ids,
+                                    $brand, $price,
+                                    $description, $sku,
+                                    $derived_products_data, $products_writer);
+                $this->adapt_product_additional_images($product_id, $sku,
+                                                      $products_writer);
+                $this->adapt_product_option($product_id, $products_writer);
+                $this->adapt_product_color_option_value($product_id, $color,
+                                                        $quantity, 0,
+                                                        $products_writer, $derived_products_data);
+                $this->adapt_product_size_option_value($product_id, $size,
+                                                      $color, $quantity,
+                                                      0, $products_writer,
+                                                      $derived_products_data);
+
+                $products_data[(string) $fl_product_id] = array('init_price' => $price);
+                $derived_products_data[$product_id]['quantity'] = $quantity;
+            }
+        }
+
+        $this->store_product_discount($product_data);
+        $this->update_products_quantity($derived_products_data, $products_writer);
+        $this->sort_products($derived_products_data, $products_writer);
+        return [$categories_writer, $options_writer, $products_writer];
+    }
+
+    private function create_categories_sheet(&$writer)
+    {
+        $writer->setActiveSheetIndex($this->categories_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_sheet->setTitle("Categories");
+
+        $data = array();
+        $i = 1;
+        $j = 0;
+        $data[$j++] = 'category_id';
+        $data[$j++] = 'parent_id';
+        $data[$j++] = 'name(en-gb)';
+        $data[$j++] = 'top';
+        $data[$j++] = 'columns';
+        $data[$j++] = 'sort_order';
+        $data[$j++] = 'image_name';
+        $data[$j++] = 'date_added';
+        $data[$j++] = 'date_modified';
+        $data[$j++] = 'seo_keyword';
+        $data[$j++] = 'description(en-gb)';
+        $data[$j++] = 'meta_title(en-gb)';
+        $data[$j++] = 'meta_description(en-gb)';
+        $data[$j++] = 'meta_keywords(en-gb)';
+        $data[$j++] = 'store_ids';
+        $data[$j++] = 'layout';
+        $data[$j++] = 'status';
+        $this->setCellRow($write_sheet, $i, $data);
+
+        $writer->createSheet();
+        $writer->setActiveSheetIndex($this->categories_filter_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_sheet->setTitle("CategoryFilters");
+
+        $data = array();
+        $j = 0;
+        $data[$j++] = 'category_id';
+        $data[$j++] = 'filter_group';
+        $data[$j++] = 'filter';
+
+        $this->setCellRow($write_sheet, 1, $data);
+    }
+
+    private function create_products_sheet(&$writer)
+    {
+        $products_sheet_title = 'Products';
+
+        $write_sheet = $writer->createSheet($this->products_index);
+        $write_sheet->setTitle($products_sheet_title);
+
+        $this->add_product_headers($write_sheet);
+    }
+
+    private function create_product_options_sheet(&$writer)
+    {
+        $writer->createSheet();
+        $writer->setActiveSheetIndex($this->products_options_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_sheet->setTitle('ProductOptions');
+        $headers = ['product_id', 'option', 'default_option_value', 'required'];
+        $this->setCellRow($write_sheet, 1, $headers);
+
+        $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function create_additional_images_sheet(&$writer)
+    {
+        $writer->createSheet();
+        $writer->setActiveSheetIndex($this->products_additional_images_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_sheet->setTitle('AdditionalImages');
+        $headers = ['product_id', 'image',	'sort_order'];
+        $this->setCellRow($write_sheet, 1, $headers);
+
+        $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function create_product_option_values_sheet(&$writer)
+    {
+        $writer->createSheet();
+        $writer->setActiveSheetIndex($this->products_option_values_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_sheet->setTitle('ProductOptionValues');
+        $headers = ['product_id', 'option', 'option_value', 'quantity', 'subtract',
+         'price', 'price_prefix', 'points', 'points_prefix', 'weight', 'weight_prefix'];
+        $this->setCellRow($write_sheet, 1, $headers);
+
+        $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function create_product_skus_sheet(&$writer){
+      $writer->createSheet();
+      $writer->setActiveSheetIndex($this->products_skus_index);
+      $write_sheet = $writer->getActiveSheet();
+
+      $write_sheet->setTitle('ProductSkus');
+      $headers = ['product_id', 'detailed_sku', 'color', 'size'];
+      $this->setCellRow($write_sheet, 1, $headers);
+
+      $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function create_options_sheet(&$writer){
+      $writer->createSheet();
+      $writer->setActiveSheetIndex($this->options_index);
+      $write_sheet = $writer->getActiveSheet();
+      $write_sheet->setTitle('Options');
+      $headers = ['option_id', 'type', 'sort_order', 'name(en-gb)'];
+      $this->setCellRow($write_sheet, 1, $headers);
+
+      $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function create_option_values_sheet($writer){
+      $writer->createSheet();
+      $writer->setActiveSheetIndex($this->option_values_index);
+      $write_sheet = $writer->getActiveSheet();
+      $write_sheet->setTitle('OptionValues');
+      $headers = ['option_value_id', 'option_id', 'image', 'sort_order', 'name(en-gb)'];
+      $this->setCellRow($write_sheet, 1, $headers);
+
+      $write_sheet->freezePaneByColumnAndRow(1, 2);
+    }
+
+    private function derive_catrgories_data($categories_data)
+    {
+        $derived_categories_data = array();
+
+        foreach ($categories_data as $category_id => $category_data) {
+            if (isset($categories_data[$category_data['parent_id']])) {
+                $second_level_data = $categories_data[$category_data['parent_id']];
+                if (isset($categories_data[$second_level_data['parent_id']])) {
+                    $third_level_data = $categories_data[$second_level_data['parent_id']];
+                    if (isset($third_level_data)) {
+                        // Category is a sub-category.
+                          $derived_name = $third_level_data['name'].$this->category_delimeter.
+                          $second_level_data['name'].$this->category_delimeter.$category_data['name'];
+                        $derived_categories_data[$derived_name] = $category_data;
+                      }
+                    } else {
+                      // Category is a brand.
+                      $derived_name = $second_level_data['name'].$this->category_delimeter.$category_data['name'];
+                      $derived_categories_data[$derived_name] = $category_data;
+                }
+              } else {
+              // Category is a gender.
+              $derived_categories_data[$category_data['name']] = $category_data;
+            }
+        }
+
+        return $derived_categories_data;
+    }
+
+    private function adapt_category($brand, $gender,
+                                    $category, &$derived_categories_data,
+                                    &$max_category_id, &$writer)
+    {
+        $writer->setActiveSheetIndex($this->categories_index);
+        $write_sheet = $writer->getActiveSheet();
+
+        // TODO: return one or more category_id.
+        $category_ids = array();
+        if (trim(strtolower($gender)) == 'unisex') {
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "MEN", trim($category)));
+
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "WOMEN", trim($category)));
+        } elseif (trim(strtolower($gender)) == 'kids') {
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "KIDS", trim($category)));
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "BOYS", trim($category)));
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "GIRLS", trim($category)));
+
+        } elseif (trim(strtolower($gender)) == 'women') {
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "WOMEN", trim($category)));
+        } else {
+            $category_ids = array_merge($category_ids,
+                      $this->upsert_category($max_category_id, $derived_categories_data,
+                                            $write_sheet, trim($brand),
+                                            "MEN", trim($category)));
+        }
+
+        return array_unique($category_ids);
+    }
+
+    private function upsert_category(&$max_category_id, &$derived_categories_data,
+                                    $write_sheet, $brand,
+                                    $gender, $category)
+    {
+        $category_derived_name = $gender.$this->category_delimeter.$brand.
+        $this->category_delimeter.$category;
+        $brand_derived_name = $gender.$this->category_delimeter.$brand;
+        $category_ids = array();
+
+        if (array_key_exists($category_derived_name, $derived_categories_data)) {
+            array_push($category_ids, $derived_categories_data[$category_derived_name]['category_id']);
+            array_push($category_ids, $derived_categories_data[$brand_derived_name]['category_id']);
+            array_push($category_ids, $derived_categories_data[$gender]['category_id']);
+
+            return $category_ids;
+        } elseif (array_key_exists($brand_derived_name, $derived_categories_data)) {
+            $category_id = $max_category_id++;
+            $brand_id = $derived_categories_data[$brand_derived_name]['category_id'];
+
+            $this->append_category_to_sheet($write_sheet, $category_id,
+                                            $brand_id, $category,
+                                            'false', '0',
+                                            '0', $category,
+                                            $category, '0',
+                                            'true');
+
+            $derived_categories_data[$category_derived_name] = array('category_id' => $category_id,
+                                                                    'parent_id' => $brand_id,
+                                                                    'name' => $category);
+
+            array_push($category_ids, $category_id);
+            array_push($category_ids, $brand_id);
+            array_push($category_ids, $derived_categories_data[$gender]['category_id']);
+            return $category_ids;
+        } elseif (array_key_exists($gender, $derived_categories_data)) {
+            $brand_id = $max_category_id++;
+            $category_id = $max_category_id++;
+            $gender_id = $derived_categories_data[$gender]['category_id'];
+
+            $this->append_category_to_sheet($write_sheet, $brand_id,
+                                          $gender_id, $brand,
+                                         'false', '0',
+                                          '0', $brand,
+                                          $brand, '0',
+                                          'true');
+            $this->append_category_to_sheet($write_sheet, $category_id,
+                                          $brand_id, $category,
+                                          'false', '0',
+                                          '0', $category,
+                                          $category, '0',
+                                          'true');
+
+            $derived_categories_data[$brand_derived_name] = array('category_id' => $brand_id,
+                                                                  'parent_id' => $gender_id,
+                                                                    'name' => $brand);
+            $derived_categories_data[$category_derived_name] = array('category_id' => $category_id,
+                                                                  'parent_id' => $brand_id,
+                                                                  'name' => $category);
+
+            array_push($category_ids, $category_id);
+            array_push($category_ids, $brand_id);
+            array_push($category_ids, $gender_id);
+            return $category_ids;
+        } else {
+            $brand_id = $max_category_id++;
+            $gender_id = $max_category_id++;
+            $category_id = $max_category_id++;
+
+            $this->append_category_to_sheet($write_sheet, $gender_id,
+                                          0, $gender,
+                                          'false', '0',
+                                          '0', $gender,
+                                          $gender, '0',
+                                          'true');
+            $this->append_category_to_sheet($write_sheet, $brand_id,
+                                          $gender_id, $brand,
+                                          'false', '0',
+                                          '0', $brand,
+                                          $brand, '0',
+                                          'true');
+            $this->append_category_to_sheet($write_sheet, $category_id,
+                                          $brand_id, $category,
+                                          'false', '0',
+                                          '0', $category,
+                                          $category, '0',
+                                          'true');
+
+            $derived_categories_data[$gender] = array('category_id' => $gender_id,
+                                                      'parent_id' => 0,
+                                                      'name' => $gender);
+            $derived_categories_data[$brand_derived_name] = array('category_id' => $brand_id,
+                                                                  'parent_id' => $gender_id,
+                                                                  'name' => $brand);
+            $derived_categories_data[$category_derived_name] = array('category_id' => $category_id,
+                                                                    'parent_id' => $brand_id,
+                                                                    'name' => $category);
+
+            array_push($category_ids, $category_id);
+            array_push($category_ids, $brand_id);
+            array_push($category_ids, $gender_id);
+            return $category_ids;
+        }
+    }
+
+    private function adapt_product($fl_product_id, $product_id,
+                                  $name, $categories,
+                                  $manufacturer, $price,
+                                  $description, $detailed_sku,
+                                  &$derived_products_data, &$writer,
+                                  $stock_status_id = 6, $store_ids= '0')
+    {
+        // TODO: set the product category.
+        $writer->setActiveSheetIndex($this->products_index);
+        $write_sheet = $writer->getActiveSheet();
+
+        $write_index = $write_sheet->getHighestRow();
+        $write_index++;
+
+        $derived_products_data[$product_id] = array('sheet_index' => $write_index);
+        $sku_fragments = explode('-', $detailed_sku);
+        $color_sku = $sku_fragments[0];
+        $image_matches = glob(DIR_IMAGE.'catalog/Products/'.$color_sku.'-*');
+
+        $write_sheet->setCellValueByColumnAndRow(0, $write_index, $product_id);
+        $write_sheet->setCellValueByColumnAndRow(1, $write_index, $name);
+        $write_sheet->setCellValueByColumnAndRow(2, $write_index, $categories);
+        $write_sheet->setCellValueByColumnAndRow(3, $write_index, $fl_product_id);
+        $write_sheet->setCellValueByColumnAndRow(11, $write_index, $name);    // model
+        $write_sheet->setCellValueByColumnAndRow(12, $write_index, $manufacturer);
+        if (isset($image_matches[0])){
+          $image_dir = substr($image_matches[0], strlen(DIR_IMAGE));
+          $write_sheet->setCellValueByColumnAndRow(13, $write_index, $image_dir);
+        } else {
+          $write_sheet->setCellValueByColumnAndRow(13, $write_index, '');
+        }
+        $write_sheet->setCellValueByColumnAndRow(15, $write_index, $price);
+        $write_sheet->setCellValueByColumnAndRow(29, $write_index, $description);
+        $write_sheet->setCellValueByColumnAndRow(33, $write_index, $stock_status_id);
+        $write_sheet->setCellValueByColumnAndRow(34, $write_index, $store_ids);
+    }
+
+    private function adapt_product_id($fl_product_id, &$products_data)
+    {
+        // NOTE: Considered options
+        // #1) Using an extra column in the database to act like a map between fl_product_id and opencart_product_ids.
+
+        //  Example code.
+        //  ```
+        //    $insert_product_id_query = 'INSERT IGNORE INTO `'.DB_CUSTOM_PREFIX.'product_id` (`fl_product_id`) VALUES (\''.((string) $fl_product_id).'\');';
+        //    $select_product_id_query = 'SELECT product_id FROM `'.DB_CUSTOM_PREFIX.'product_id` WHERE fl_product_id = \''.((string) $fl_product_id).'\' LIMIT 1;';
+        //
+        //    $this->db->query($insert_product_id_query);
+        //    $result = $this->db->query($select_product_id_query);
+        //    return $result->row['product_id'];
+        //    ```
+        // - Pros:
+        //  - Flexibiliy:
+        //    You have the abillity to change either one of the mapped pair.
+        // - Cons:
+        //  - Processing overhead:
+        //    The number of database calls is in a Proportional relationship with the size of excel sheet.
+        //    You could use bulk insert a into database but you'd still have to select all the table rows
+        //    and map the keys then update the sheet to handle the case of an incremental import (when the
+        //    user wants to update existing data), eventually you'll end up iterating through all the products.
+
+        // #2) Hash the footloose product id into a numercial value if it's not a numerical value.
+        //  Example code.
+        //  ```
+        //    return is_int($fl_product_id)? $fl_product_id : hexdec(bin2hex($fl_product_id)) ;
+        //    ```
+        // or
+        //  ```
+            // return hexdec(bin2hex($fl_product_id));
+            // ----------------------------------------
+            if (isset($products_data[$fl_product_id]['id'])){
+              return $products_data[$fl_product_id]['id'];
+            } else {
+              $this->i++;
+              $products_data[$fl_product_id]['id'] = $this->i;
+              return $this->i;
+            }
+            // ----------------------------------------
+        //    ```
+        // - Pros:
+        //  - Ligth-weight:
+        //    This method doesn't consume as much resources as the former mehtod.
+        //  - Easy to understand.
+        // - Cons:
+        //  - Length:
+        //    The adapted product_id from this method is in a Proportional relationship with the length of the actual
+        //    product_id (the footloose product id), As a result we'd have update the product_id datatypes accross
+        //    all of the tables.
+        //  - Lack of flexibility:
+        //    This method is not as flexible as the former method.
+    }
+
+    private function adapt_product_additional_images($product_id, $detailed_sku, &$writer){
+      $writer->setActiveSheetIndex($this->products_additional_images_index);
+      $write_sheet = $writer->getActiveSheet();
+
+      $write_index = $write_sheet->getHighestRow();
+
+      $sku_fragments = explode('-', $detailed_sku);
+
+      // TODO: check if this is right.
+      // $color_sku = $sku_fragments[0].'-'.$sku_fragments[1];
+      $color_sku = $sku_fragments[0];
+      $image_matches = glob(DIR_IMAGE.'catalog/Products/'.$color_sku.'-*');
+      foreach ( array_slice($image_matches, 1) as $index => $image_match){
+        $image_dir = substr($image_match, strlen(DIR_IMAGE));
+
+        $row_data = [$product_id, $image_dir, $index];
+        $this->setCellRow($write_sheet, ++$write_index, $row_data);
+      }
+    }
+
+    private function adapt_product_option($product_id, &$writer)
+    {
+        $writer->setActiveSheetIndex($this->products_options_index);
+        $write_sheet = $writer->getActiveSheet();
+
+        $write_index = $write_sheet->getHighestRow();
+        $write_index++;
+
+        $write_sheet->setCellValueByColumnAndRow(0, $write_index, $product_id);
+        $write_sheet->setCellValueByColumnAndRow(1, $write_index, 'Color');
+        $write_sheet->setCellValueByColumnAndRow(3, $write_index, 'true');
+
+        $write_index++;
+
+        $write_sheet->setCellValueByColumnAndRow(0, $write_index, $product_id);
+        $write_sheet->setCellValueByColumnAndRow(1, $write_index, 'Size');
+        $write_sheet->setCellValueByColumnAndRow(3, $write_index, 'true');
+    }
+
+    private function adapt_product_option_value($product_id, $option,
+                                                $option_value, $quantity,
+                                                $price, &$writer,
+                                                $substract = 'true', $price_prefix = '+',
+                                                $points = 0, $points_prefix = '+',
+                                                $weight = '0.0', $weight_prefix = '+')
+    {
+        $writer->setActiveSheetIndex($this->products_option_values_index);
+        $write_sheet = $writer->getActiveSheet();
+
+        $write_index = $write_sheet->getHighestRow();
+        $write_index++;
+
+        $this->setCellRow($write_sheet, $write_index, [$product_id, $option,
+        $option_value, $quantity,
+        $substract, $price,
+        $price_prefix, $points,
+        $points_prefix, $weight,
+        $weight_prefix]);
+
+    }
+
+    private function adapt_product_color_option_value($product_id, $color,
+                                                    $quantity, $price,
+                                                    &$writer, &$derived_products_data,
+                                                    $option = 'Color', $substract = 'true',
+                                                    $price_prefix = '+', $points = 0,
+                                                    $points_prefix = '+', $weight = '0.0',
+                                                    $weight_prefix = '+')
+    {
+
+      if (!isset($derived_products_data[$product_id][$color]['is_set'])){
+          $derived_products_data[$product_id][$color]['is_set'] = true;
+
+          $this->adapt_product_option_value($product_id, $option,
+                                            $color, $quantity,
+                                            $price, $writer,
+                                            $substract, $price_prefix,
+                                            $points, $points_prefix,
+                                            $weight, $weight_prefix);
+        }
+    }
+
+    private function adapt_product_size_option_value($product_id, $size,
+                                                    $color, $quantity,
+                                                    $price, &$writer,
+                                                    &$derived_products_data, $option = 'Size',
+                                                    $substract = 'true', $price_prefix = '+',
+                                                    $points = 0, $points_prefix = '+',
+                                                    $weight = '0.0', $weight_prefix = '+')
+    {
+      if (!isset($derived_products_data[$product_id][$color][$size])){
+        $derived_products_data[$product_id][$color][$size] = true;
+
+        $this->adapt_product_option_value($product_id, $option,
+                                          $size, $quantity,
+                                          $price, $writer,
+                                          $substract, $price_prefix,
+                                          $points, $points_prefix,
+                                          $weight, $weight_prefix);
+      }
+    }
+
+    private function adapt_product_detailed_sku($product_id, $detailed_sku,
+                                                $color, $size,
+                                                &$writer){
+      $writer->setActiveSheetIndex($this->products_skus_index);
+      $write_sheet = $writer->getActiveSheet();
+
+      $write_index = $write_sheet->getHighestRow();
+      $write_index++;
+
+      $row_data = [$product_id, $detailed_sku, $color, $size];
+      $this->setCellRow($write_sheet, $write_index, $row_data);
+    }
+
+    private function adapt_options($options, &$writer){
+      $writer->setActiveSheetIndex($this->options_index);
+      $write_sheet = $writer->getActiveSheet();
+
+      $max_option_id = empty($options)? 1: max($options);
+      $max_sheet_row = $write_sheet->getHighestRow();
+
+      if(!array_key_exists('Color', $options)){
+        $color_option_id = $max_option_id++;
+        $row_data = [$color_option_id, 'select', 0, 'Color'];
+        $this->setCellRow($write_sheet, ++$max_sheet_row, $row_data);
+      } else {
+        $color_option_id = $options['Color'];
+      }
+
+      if(!array_key_exists('Size', $options)){
+        $size_option_id = $max_option_id++;
+        $row_data = [$size_option_id, 'select', 0, 'Size'];
+        $this->setCellRow($write_sheet, ++$max_sheet_row, $row_data);
+      } else {
+        $size_option_id = $options['Size'];
+      }
+
+      return [$color_option_id, $size_option_id];
+    }
+
+    private function adapt_option_value($option_id, $option_value,
+                                        &$option_values, &$max_option_value_id,
+                                        &$writer){
+      if (!isset($option_values[$option_id][$option_value])){
+          $writer->setActiveSheetIndex($this->option_values_index);
+          $write_sheet = $writer->getActiveSheet();
+
+          $row_index = $write_sheet->getHighestRow();
+          $row_index++;
+
+          $row_data = [++$max_option_value_id, $option_id, '', 0, $option_value];
+          $this->setCellRow($write_sheet, $row_index, $row_data);
+          $option_values[$option_id][$option_value] = $max_option_value_id;
+      }
+    }
+
+    private function add_product_headers(&$worksheet)
+    {
+        // TODO: re-enable languages.
+        $languages = $this->getLanguages();
+        $default_language_id = $this->getDefaultLanguageId();
+
+        $box_format = array(
+              'fill' => array(
+                  'type'      => PHPExcel_Style_Fill::FILL_SOLID,
+                  'color'     => array( 'rgb' => 'F0F0F0')
+              ),
+              /*
+              'alignment' => array(
+                  'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+                  'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                  'wrap'       => false,
+                  'indent'     => 0
+              )
+              */
+          );
+        $text_format = array(
+              'numberformat' => array(
+                  'code' => PHPExcel_Style_NumberFormat::FORMAT_TEXT
+              ),
+              /*
+              'alignment' => array(
+                  'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+                  'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                  'wrap'       => false,
+                  'indent'     => 0
+              )
+              */
+          );
+
+        $price_format = array(
+              'numberformat' => array(
+                  'code' => '######0.00'
+              ),
+              'alignment' => array(
+                  'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+                  /*
+                  'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                  'wrap'       => false,
+                  'indent'     => 0
+                  */
+              )
+          );
+        $weight_format = array(
+              'numberformat' => array(
+                  'code' => '##0.00'
+              ),
+              'alignment' => array(
+                  'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+                  /*
+                  'vertical'   => PHPExcel_Style_Alignment::VERTICAL_CENTER,
+                  'wrap'       => false,
+                  'indent'     => 0
+                  */
+              )
+          );
+
+
+      // get list of the field names, some are only available for certain OpenCart versions
+          $query = $this->db->query("DESCRIBE `".DB_PREFIX."product`");
+        $product_fields = array();
+        foreach ($query->rows as $row) {
+            $product_fields[] = $row['Field'];
+        }
+
+          // Opencart versions from 2.0 onwards also have product_description.meta_title
+          $sql = "SHOW COLUMNS FROM `".DB_PREFIX."product_description` LIKE 'meta_title'";
+        $query = $this->db->query($sql);
+        $exist_meta_title = ($query->num_rows > 0) ? true : false;
+
+          // Set the column widths
+          $j = 0;
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('product_id'), 4)+1);
+        // Disable multi-lang column.
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('name')+4, 30)+1);
+        // foreach ($languages as $language) {
+        //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('name')+4, 30)+1);
+        // }
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('categories'), 12)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('sku'), 10)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('upc'), 12)+1);
+        if (in_array('ean', $product_fields)) {
+            $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('ean'), 14)+1);
+        }
+        if (in_array('jan', $product_fields)) {
+            $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('jan'), 13)+1);
+        }
+        if (in_array('isbn', $product_fields)) {
+            $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('isbn'), 13)+1);
+        }
+        if (in_array('mpn', $product_fields)) {
+            $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('mpn'), 15)+1);
+        }
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('location'), 10)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('quantity'), 4)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('model'), 8)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('manufacturer'), 10)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('image_name'), 12)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('shipping'), 5)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('price'), 10)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('points'), 5)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('date_added'), 19)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('date_modified'), 19)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('date_available'), 10)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('weight'), 6)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('weight_unit'), 3)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('length'), 8)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('width'), 8)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('height'), 8)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('length_unit'), 3)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('status'), 5)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('tax_class_id'), 2)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('seo_keyword'), 16)+1);
+        // Disable multi-lang column.
+
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('description')+4, 32)+1);
+        // foreach ($languages as $language) {
+        //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('description')+4, 32)+1);
+        // }
+        if ($exist_meta_title) {
+            // Disable multi-lang column.
+            $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_title')+4, 20)+1);
+            // foreach ($languages as $language) {
+            //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_title')+4, 20)+1);
+            // }
+        }
+        // Disable multi-lang column.
+
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_description')+4, 32)+1);
+        // foreach ($languages as $language) {
+        //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_description')+4, 32)+1);
+        // }
+
+        // Disable multi-lang column.
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_keywords')+4, 32)+1);
+        // foreach ($languages as $language) {
+        //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('meta_keywords')+4, 32)+1);
+        // }
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('stock_status_id'), 3)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('store_ids'), 16)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('layout'), 16)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('related_ids'), 16)+1);
+
+        // Disable multi-lang column.
+
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('tags')+4, 32)+1);
+        // foreach ($languages as $language) {
+        //     $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('tags')+4, 32)+1);
+        // }
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('sort_order'), 8)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('subtract'), 5)+1);
+        $worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('minimum'), 8)+1);
+
+          // The product headings row and column styles
+          $styles = array();
+        $data = array();
+        $i = 1;
+        $j = 0;
+        $data[$j++] = 'product_id';
+        // Disable multi-lang column.
+
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'name('.$languages[1]['code'].')';
+        // foreach ($languages as $language) {
+        //     $styles[$j] = &$text_format;
+        //     $data[$j++] = 'name('.$language['code'].')';
+        // }
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'categories';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'sku';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'upc';
+        if (in_array('ean', $product_fields)) {
+            $styles[$j] = &$text_format;
+            $data[$j++] = 'ean';
+        }
+        if (in_array('jan', $product_fields)) {
+            $styles[$j] = &$text_format;
+            $data[$j++] = 'jan';
+        }
+        if (in_array('isbn', $product_fields)) {
+            $styles[$j] = &$text_format;
+            $data[$j++] = 'isbn';
+        }
+        if (in_array('mpn', $product_fields)) {
+            $styles[$j] = &$text_format;
+            $data[$j++] = 'mpn';
+        }
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'location';
+        $data[$j++] = 'quantity';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'model';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'manufacturer';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'image_name';
+        $data[$j++] = 'shipping';
+        $styles[$j] = &$price_format;
+        $data[$j++] = 'price';
+        $data[$j++] = 'points';
+        $data[$j++] = 'date_added';
+        $data[$j++] = 'date_modified';
+        $data[$j++] = 'date_available';
+        $styles[$j] = &$weight_format;
+        $data[$j++] = 'weight';
+        $data[$j++] = 'weight_unit';
+        $data[$j++] = 'length';
+        $data[$j++] = 'width';
+        $data[$j++] = 'height';
+        $data[$j++] = 'length_unit';
+        $data[$j++] = 'status';
+        $data[$j++] = 'tax_class_id';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'seo_keyword';
+        // Disable multi-lang column.
+
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'description('.$languages[1]['code'].')';
+        // foreach ($languages as $language) {
+        //     $styles[$j] = &$text_format;
+        //     $data[$j++] = 'description('.$language['code'].')';
+        // }
+        // Disable multi-lang column.
+
+        if ($exist_meta_title) {
+            $styles[$j] = &$text_format;
+            $data[$j++] = 'meta_title('.$languages[1]['code'].')';
+            // foreach ($languages as $language) {
+            //     $styles[$j] = &$text_format;
+            //     $data[$j++] = 'meta_title('.$language['code'].')';
+            // }
+        }
+        // Disable multi-lang column.
+
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'meta_description('.$languages[1]['code'].')';
+        // foreach ($languages as $language) {
+        //     $styles[$j] = &$text_format;
+        //     $data[$j++] = 'meta_description('.$language['code'].')';
+        // }
+        // Disable multi-lang column.
+
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'meta_keywords('.$languages[1]['code'].')';
+        // foreach ($languages as $language) {
+        //     $styles[$j] = &$text_format;
+        //     $data[$j++] = 'meta_keywords('.$language['code'].')';
+        // }
+        $data[$j++] = 'stock_status_id';
+        $data[$j++] = 'store_ids';
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'layout';
+        $data[$j++] = 'related_ids';
+        // Disable multi-lang column.
+
+        $styles[$j] = &$text_format;
+        $data[$j++] = 'tags('.$languages[1]['code'].')';
+        // foreach ($languages as $language) {
+        //     $styles[$j] = &$text_format;
+        //     $data[$j++] = 'tags('.$language['code'].')';
+        // }
+        $data[$j++] = 'sort_order';
+        $data[$j++] = 'subtract';
+        $data[$j++] = 'minimum';
+        $worksheet->getRowDimension($i)->setRowHeight(30);
+        $this->setCellRow($worksheet, $i, $data, $box_format);
+    }
+
+    public function store_product_discount($products_data){
+      // $sql = "INSERT INTO `opencart-2.2`.`oc_product_special` (`product_special_id`, `product_id`, `product_sku_id`, `customer_group_id`, `priority`, `price`, `date_start`, `date_end`, `type`) VALUES (NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);"
+
+      $sql = "REPLACE INTO `".DB_PREFIX."product_special` (`product_id`, `product_sku_id`, `customer_group_id`, `priority`, `price`, `date_start`, `type`)  VALUES ";
+      $is_query_ready = false;
+
+      foreach ($products_data as $product_id => $product_data) {
+        foreach ($product_data as $product_sku_id => $price_data) {
+          $price = $price_data['price'];
+          $discount_value = $price_data['discount_value'];
+
+          if ($discount_value) {
+            $sql .= "(".$product_id.", '".$product_sku_id."', 1, 0, ".($price - $discount_value).", CURRENT_DATE, 'flat_price'), ";
+            $is_query_ready = true;
+          }
+      }
+    }
+
+    if ($is_query_ready){
+      $sql = rtrim($sql,', ').';';
+      $this->db->query($sql);
+      }
+    }
+
+    public function append_category_to_sheet($write_sheet, $category_id,
+                                              $parent_id, $name,
+                                              $top, $columns,
+                                              $sort_order,
+                                              $seo_keyword, $meta_title,
+                                              $store_id, $status)
+    {
+        $write_index = $write_sheet->getHighestRow();
+        $write_index++;
+
+        $write_sheet->setCellValueByColumnAndRow(0, $write_index, $category_id);
+        $write_sheet->setCellValueByColumnAndRow(1, $write_index, $parent_id);
+        $write_sheet->setCellValueByColumnAndRow(2, $write_index, $name);
+        $write_sheet->setCellValueByColumnAndRow(3, $write_index, $top);
+        $write_sheet->setCellValueByColumnAndRow(4, $write_index, $columns);
+        $write_sheet->setCellValueByColumnAndRow(5, $write_index, $sort_order);
+        $write_sheet->setCellValueByColumnAndRow(9, $write_index, $seo_keyword);
+        $write_sheet->setCellValueByColumnAndRow(11, $write_index, $meta_title);
+        $write_sheet->setCellValueByColumnAndRow(14, $write_index, $store_id);
+        $write_sheet->setCellValueByColumnAndRow(16, $write_index, $status);
+    }
+
+    private function update_products_quantity($derived_products_data, &$writer){
+      $writer->setActiveSheetIndex($this->products_index);
+      $write_sheet = $writer->getActiveSheet();
+
+      foreach ($derived_products_data as $product_id => $product_data) {
+        if (isset($product_data['quantity'])){
+          $write_sheet->setCellValueByColumnAndRow(10, $product_data['sheet_index'], $product_data['quantity']);
+        } else {
+          $write_sheet->setCellValueByColumnAndRow(10, $product_data['sheet_index'], 0);
+        }
+      }
+    }
+
+    private function sort_products($derived_products_data, &$writer)
+    {
+        $writer->setActiveSheetIndex($this->products_index);
+        $write_sheet = $writer->getActiveSheet();
+        $write_index = 2;
+        $last_column = $write_sheet->getHighestColumn();
+
+        ksort($derived_products_data);
+        $stopping_point = intval((count($derived_products_data) + $write_index) / 2);
+        // $temp_product_data = array();
+
+        foreach ($derived_products_data as $product_id => $product_data) {
+            $temp_target_index = $product_data['sheet_index'];
+
+            # get the product_data from the sheet.
+            $product_row_data = $write_sheet->rangeToArray('A'.$temp_target_index.':'.$last_column.$temp_target_index)[0];
+            $temp_row_data = $write_sheet->rangeToArray('A'.$write_index.':'.$last_column.$write_index)[0];
+
+            # Swap the two rows.
+            $this->setCellRow($write_sheet, $write_index, $product_row_data);
+            $this->setCellRow($write_sheet, $temp_target_index, $temp_row_data);
+            $derived_products_data[$product_id]['sheet_index'] = $write_index;
+            $derived_products_data[$temp_row_data[0]]['sheet_index'] = $temp_target_index;
+
+            if ($write_index == $stopping_point) {
+                break;
+            } else {
+                $write_index++;
+            }
+        }
+    }
+
+    public function get_last_option_value_id(){
+      $sql  = "SELECT MAX(option_value_id)  as max_option_value_id FROM `".DB_PREFIX."option_value` LIMIT 1";
+      $query_result = $this->db->query($sql)->rows;
+
+      return $query_result[0]['max_option_value_id'];
+    }
+
+    protected function storeProductIntoDatabase( &$product, &$languages, &$product_fields, $exist_table_product_tag, $exist_meta_title, &$layout_ids, &$available_store_ids, &$manufacturers, &$weight_class_ids, &$length_class_ids, &$url_alias_ids ) {
+      // extract the product details
+      $product_id = $product['product_id'];
+      $names = $product['names'];
+      $categories = $product['categories'];
+      $quantity = $product['quantity'];
+      $model = $this->db->escape($product['model']);
+      $manufacturer_name = $product['manufacturer_name'];
+      $image = $this->db->escape($product['image']);
+      $shipping = $product['shipping'];
+      $shipping = ((strtoupper($shipping)=="YES") || (strtoupper($shipping)=="Y") || (strtoupper($shipping)=="TRUE")) ? 1 : 0;
+      $price = trim($product['price']);
+      $points = $product['points'];
+      $date_added = $product['date_added'];
+      $date_modified = $product['date_modified'];
+      $date_available = $product['date_available'];
+      $weight = ($product['weight']=="") ? 0 : $product['weight'];
+      $weight_unit = $product['weight_unit'];
+      $weight_class_id = (isset($weight_class_ids[$weight_unit])) ? $weight_class_ids[$weight_unit] : 0;
+      $status = $product['status'];
+      $status = ((strtoupper($status)=="TRUE") || (strtoupper($status)=="YES") || (strtoupper($status)=="ENABLED")) ? 1 : 0;
+      $tax_class_id = $product['tax_class_id'];
+      $viewed = $product['viewed'];
+      $descriptions = $product['descriptions'];
+      $stock_status_id = $product['stock_status_id'];
+      if ($exist_meta_title) {
+        $meta_titles = $product['meta_titles'];
+      }
+      $meta_descriptions = $product['meta_descriptions'];
+      $length = $product['length'];
+      $width = $product['width'];
+      $height = $product['height'];
+      $keyword = $this->db->escape($product['seo_keyword']);
+      $length_unit = $product['measurement_unit'];
+      $length_class_id = (isset($length_class_ids[$length_unit])) ? $length_class_ids[$length_unit] : 0;
+      $sku = $this->db->escape($product['sku']);
+      $upc = $this->db->escape($product['upc']);
+      if (in_array('ean',$product_fields)) {
+        $ean = $this->db->escape($product['ean']);
+      }
+      if (in_array('jan',$product_fields)) {
+        $jan = $this->db->escape($product['jan']);
+      }
+      if (in_array('isbn',$product_fields)) {
+        $isbn = $this->db->escape($product['isbn']);
+      }
+      if (in_array('mpn',$product_fields)) {
+        $mpn = $this->db->escape($product['mpn']);
+      }
+      $location = $this->db->escape($product['location']);
+      $store_ids = $product['store_ids'];
+      $layout = $product['layout'];
+      $related_ids = $product['related_ids'];
+      $subtract = $product['subtract'];
+      $subtract = ((strtoupper($subtract)=="TRUE") || (strtoupper($subtract)=="YES") || (strtoupper($subtract)=="ENABLED")) ? 1 : 0;
+      $minimum = $product['minimum'];
+      $meta_keywords = $product['meta_keywords'];
+      $tags = $product['tags'];
+      $sort_order = $product['sort_order'];
+      if ($manufacturer_name) {
+        $this->storeManufacturerIntoDatabase( $manufacturers, $manufacturer_name, $store_ids, $available_store_ids );
+        if (array_key_exists($manufacturer_name, $manufacturers))
+        {
+          $manufacturer_id = $manufacturers[$manufacturer_name]['manufacturer_id'];
+        } else {
+          $manufacturer_name = str_replace('&', '&amp;', $manufacturer_name);
+          $manufacturer_id = $manufacturers[$manufacturer_name]['manufacturer_id'];
+        }
+      } else {
+        $manufacturer_id = 0;
+      }
+
+      // generate and execute SQL for inserting the product
+      $sql  = "INSERT INTO `".DB_PREFIX."product` (`product_id`,`quantity`,`sku`,`upc`,";
+      $sql .= in_array('ean',$product_fields) ? "`ean`," : "";
+      $sql .= in_array('jan',$product_fields) ? "`jan`," : "";
+      $sql .= in_array('isbn',$product_fields) ? "`isbn`," : "";
+      $sql .= in_array('mpn',$product_fields) ? "`mpn`," : "";
+      $sql .= "`location`,`stock_status_id`,`model`,`manufacturer_id`,`image`,`shipping`,`price`,`points`,`date_added`,`date_modified`,`date_available`,`weight`,`weight_class_id`,`status`,";
+      $sql .= "`tax_class_id`,`viewed`,`length`,`width`,`height`,`length_class_id`,`sort_order`,`subtract`,`minimum`) VALUES ";
+      $sql .= "($product_id,$quantity,'$sku','$upc',";
+      $sql .= in_array('ean',$product_fields) ? "'$ean'," : "";
+      $sql .= in_array('jan',$product_fields) ? "'$jan'," : "";
+      $sql .= in_array('isbn',$product_fields) ? "'$isbn'," : "";
+      $sql .= in_array('mpn',$product_fields) ? "'$mpn'," : "";
+      $sql .= "'$location',$stock_status_id,'$model',$manufacturer_id,'$image',$shipping,$price,$points,";
+      $sql .= ($date_added=='NOW()') ? "$date_added," : "'$date_added',";
+      $sql .= ($date_modified=='NOW()') ? "$date_modified," : "'$date_modified',";
+      $sql .= ($date_available=='NOW()') ? "$date_available," : "'$date_available',";
+      $sql .= "$weight,$weight_class_id,$status,";
+      $sql .= "$tax_class_id,$viewed,$length,$width,$height,'$length_class_id','$sort_order','$subtract','$minimum');";
+      $this->db->query($sql);
+      foreach ($languages as $language) {
+        $language_code = $language['code'];
+        $language_id = $language['language_id'];
+        $name = isset($names[$language_code]) ? $this->db->escape($names[$language_code]) : '';
+        $description = isset($descriptions[$language_code]) ? $this->db->escape($descriptions[$language_code]) : '';
+        if ($exist_meta_title) {
+          $meta_title = isset($meta_titles[$language_code]) ? $this->db->escape($meta_titles[$language_code]) : '';
+        }
+        $meta_description = isset($meta_descriptions[$language_code]) ? $this->db->escape($meta_descriptions[$language_code]) : '';
+        $meta_keyword = isset($meta_keywords[$language_code]) ? $this->db->escape($meta_keywords[$language_code]) : '';
+        $tag = isset($tags[$language_code]) ? $this->db->escape($tags[$language_code]) : '';
+        if ($exist_table_product_tag) {
+          if ($exist_meta_title) {
+            $sql  = "INSERT INTO `".DB_PREFIX."product_description` (`product_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`) VALUES ";
+            $sql .= "( $product_id, $language_id, '$name', '$description', '$meta_title', '$meta_description', '$meta_keyword' );";
+          } else {
+            $sql  = "INSERT INTO `".DB_PREFIX."product_description` (`product_id`, `language_id`, `name`, `description`, `meta_description`, `meta_keyword`) VALUES ";
+            $sql .= "( $product_id, $language_id, '$name', '$description', '$meta_description', '$meta_keyword' );";
+          }
+          $this->db->query( $sql );
+          $sql  = "INSERT INTO `".DB_PREFIX."product_tag` (`product_id`,`language_id`,`tag`) VALUES ";
+          $sql .= "($product_id, $language_id, '$tag')";
+          $this->db->query($sql);
+        } else {
+          if ($exist_meta_title) {
+            $sql  = "INSERT INTO `".DB_PREFIX."product_description` (`product_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`, `tag`) VALUES ";
+            $sql .= "( $product_id, $language_id, '$name', '$description', '$meta_title', '$meta_description', '$meta_keyword', '$tag' );";
+          } else {
+            $sql  = "INSERT INTO `".DB_PREFIX."product_description` (`product_id`, `language_id`, `name`, `description`, `meta_description`, `meta_keyword`, `tag`) VALUES ";
+            $sql .= "( $product_id, $language_id, '$name', '$description', '$meta_description', '$meta_keyword', '$tag' );";
+          }
+          $this->db->query( $sql );
+        }
+      }
+      if (count($categories) > 0) {
+        $sql = "INSERT INTO `".DB_PREFIX."product_to_category` (`product_id`,`category_id`) VALUES ";
+        $first = true;
+        foreach ($categories as $category_id) {
+          $sql .= ($first) ? "\n" : ",\n";
+          $first = false;
+          $sql .= "($product_id,$category_id)";
+        }
+        $sql .= ";";
+        $this->db->query($sql);
+      }
+      if ($keyword) {
+        if (isset($url_alias_ids[$product_id])) {
+          $url_alias_id = $url_alias_ids[$product_id];
+          $sql = "INSERT INTO `".DB_PREFIX."url_alias` (`url_alias_id`,`query`,`keyword`) VALUES ($url_alias_id,'product_id=$product_id','$keyword');";
+          unset($url_alias_ids[$product_id]);
+        } else {
+          $sql = "INSERT INTO `".DB_PREFIX."url_alias` (`query`,`keyword`) VALUES ('product_id=$product_id','$keyword');";
+        }
+        $this->db->query($sql);
+      }
+      foreach ($store_ids as $store_id) {
+        if (in_array((int)$store_id,$available_store_ids)) {
+          $sql = "INSERT INTO `".DB_PREFIX."product_to_store` (`product_id`,`store_id`) VALUES ($product_id,$store_id);";
+          $this->db->query($sql);
+        }
+      }
+      $layouts = array();
+      foreach ($layout as $layout_part) {
+        $next_layout = explode(':',$layout_part);
+        if ($next_layout===false) {
+          $next_layout = array( 0, $layout_part );
+        } else if (count($next_layout)==1) {
+          $next_layout = array( 0, $layout_part );
+        }
+        if ( (count($next_layout)==2) && (in_array((int)$next_layout[0],$available_store_ids)) && (is_string($next_layout[1])) ) {
+          $store_id = (int)$next_layout[0];
+          $layout_name = $next_layout[1];
+          if (isset($layout_ids[$layout_name])) {
+            $layout_id = (int)$layout_ids[$layout_name];
+            if (!isset($layouts[$store_id])) {
+              $layouts[$store_id] = $layout_id;
+            }
+          }
+        }
+      }
+      foreach ($layouts as $store_id => $layout_id) {
+        $sql = "INSERT INTO `".DB_PREFIX."product_to_layout` (`product_id`,`store_id`,`layout_id`) VALUES ($product_id,$store_id,$layout_id);";
+        $this->db->query($sql);
+      }
+      if (count($related_ids) > 0) {
+        $sql = "INSERT INTO `".DB_PREFIX."product_related` (`product_id`,`related_id`) VALUES ";
+        $first = true;
+        foreach ($related_ids as $related_id) {
+          $sql .= ($first) ? "\n" : ",\n";
+          $first = false;
+          $sql .= "($product_id,$related_id)";
+        }
+        $sql .= ";";
+        $this->db->query($sql);
+      }
+    }
+}
