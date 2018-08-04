@@ -1,0 +1,14 @@
+---------- Date: 2017-08-30 12:23:02 ~ IP : ::1 ----------
+REQUEST URI : /gitdev/admin/index.php?route=sale/order&token=paYhUOixsLZnD1ZpmTT1m83ORruMksfs
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_customers_orders_export_excel.xml
+   id        : Export customer list and order list
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/sale/order_list.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="$('#form').attr('action', '<?php echo $invoice; ?>'); $('#form').attr('target', '_blank'); $('#form').submit();" class="button"><?php echo $button_invoice; ?></a>
+----------------------------------------------------------------------
+
+

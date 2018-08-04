@@ -1,0 +1,2213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+
+	<id>Export Excel Data Bulk </id>
+	<version>2.0</version>
+	<vqmver>2.4.1</vqmver>
+	<author>IRSSOFT</author>
+  
+<!-- Product Returns -->
+	<!-- Language -->
+
+	<file path="admin/language/en-gb/en-gb.php">
+		<operation>
+			<search position="after"><![CDATA[$_['button_approve']                = 'Approve';]]></search>
+			<add><![CDATA[$_['button_export']                = 'Export';]]></add>
+		</operation>
+	</file>
+  
+    <!-- Controller -->  
+    <file path="admin/controller/catalog/product.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('catalog/product/export', 'token=' . $this->session->data['token'] .$url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[
+			public function export() {
+			
+					
+		$data = array();		
+				
+		$this->load->model('catalog/product');
+		
+		$data['products'] = array();
+
+						
+		$returns= array();
+
+		
+
+		$results = $this->model_catalog_product->getProducts($data);
+
+		foreach ($results as $result) {
+		
+			$special = false;
+
+			$product_specials = $this->model_catalog_product->getProductSpecials($result['product_id']);
+
+			foreach ($product_specials  as $product_special) {
+				if (($product_special['date_start'] == '0000-00-00' || $product_special['date_start'] < date('Y-m-d')) && ($product_special['date_end'] == '0000-00-00' || $product_special['date_end'] > date('Y-m-d'))) {
+					$special = $product_special['price'];
+
+					break;
+				}					
+			}
+
+			$products[] = array(
+				'product_id' => $result['product_id'],
+				'name'       => $result['name'],
+				'description' => $this->cleanString($result['description']),
+				'model'      => $result['model'],
+				'price'      => $result['price'],
+				'special'    => $special,
+				'quantity'   => $result['quantity'],
+				'status'     => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'))
+			);
+				}	
+						
+						$products_data = array();
+						
+						$products_column=array();
+						
+						$products_column = array('Product ID', 'Product Name', 'Product Description', 'Model', 'Price', 'Special', 'Quantity', 'Status');
+							
+						$products_data[0]=   $products_column;   
+						
+						foreach($products as $products_row)
+						{
+							$products_data[]=   $products_row;            
+						}
+						require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+						$filename='product_list_'.date('Y-m-d _ H:i:s');
+						$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+						// Create new PHPExcel object
+
+						$objPHPExcel = new PHPExcel();
+
+						
+						$objPHPExcel->getActiveSheet()->fromArray($products_data, null, 'A1');
+						// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+						$objPHPExcel->setActiveSheetIndex(0);
+
+						// Save Excel 95 file
+
+						$callStartTime = microtime(true);
+						$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+						
+						//Setting the header type
+						header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+						header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+						
+						header('Cache-Control: max-age=0');
+
+						$objWriter->save('php://output');
+
+					}
+					public function cleanString($text) {
+						// 1) convert á ô => a o
+						$text = preg_replace("/[áàâãªä]/u","a",$text);
+						$text = preg_replace("/[ÁÀÂÃÄ]/u","A",$text);
+						$text = preg_replace("/[ÍÌÎÏ]/u","I",$text);
+						$text = preg_replace("/[íìîï]/u","i",$text);
+						$text = preg_replace("/[éèêë]/u","e",$text);
+						$text = preg_replace("/[ÉÈÊË]/u","E",$text);
+						$text = preg_replace("/[óòôõºö]/u","o",$text);
+						$text = preg_replace("/[ÓÒÔÕÖ]/u","O",$text);
+						$text = preg_replace("/[úùûü]/u","u",$text);
+						$text = preg_replace("/[ÚÙÛÜ]/u","U",$text);
+						$text = preg_replace("/[’‘‹›‚]/u","'",$text);
+						$text = preg_replace("/[“”«»„]/u",'"',$text);
+						$text = str_replace("–","-",$text);
+						$text = str_replace(" "," ",$text);
+						$text = str_replace("ç","c",$text);
+						$text = str_replace("Ç","C",$text);
+						$text = str_replace("ñ","n",$text);
+						$text = str_replace("Ñ","N",$text);
+					 
+						//2) Translation CP1252. &ndash; => -
+						$trans = get_html_translation_table(HTML_ENTITIES); 
+						$trans[chr(130)] = '&sbquo;';    // Single Low-9 Quotation Mark 
+						$trans[chr(131)] = '&fnof;';    // Latin Small Letter F With Hook 
+						$trans[chr(132)] = '&bdquo;';    // Double Low-9 Quotation Mark 
+						$trans[chr(133)] = '&hellip;';    // Horizontal Ellipsis 
+						$trans[chr(134)] = '&dagger;';    // Dagger 
+						$trans[chr(135)] = '&Dagger;';    // Double Dagger 
+						$trans[chr(136)] = '&circ;';    // Modifier Letter Circumflex Accent 
+						$trans[chr(137)] = '&permil;';    // Per Mille Sign 
+						$trans[chr(138)] = '&Scaron;';    // Latin Capital Letter S With Caron 
+						$trans[chr(139)] = '&lsaquo;';    // Single Left-Pointing Angle Quotation Mark 
+						$trans[chr(140)] = '&OElig;';    // Latin Capital Ligature OE 
+						$trans[chr(145)] = '&lsquo;';    // Left Single Quotation Mark 
+						$trans[chr(146)] = '&rsquo;';    // Right Single Quotation Mark 
+						$trans[chr(147)] = '&ldquo;';    // Left Double Quotation Mark 
+						$trans[chr(148)] = '&rdquo;';    // Right Double Quotation Mark 
+						$trans[chr(149)] = '&bull;';    // Bullet 
+						$trans[chr(150)] = '&ndash;';    // En Dash 
+						$trans[chr(151)] = '&mdash;';    // Em Dash 
+						$trans[chr(152)] = '&tilde;';    // Small Tilde 
+						$trans[chr(153)] = '&trade;';    // Trade Mark Sign 
+						$trans[chr(154)] = '&scaron;';    // Latin Small Letter S With Caron 
+						$trans[chr(155)] = '&rsaquo;';    // Single Right-Pointing Angle Quotation Mark 
+						$trans[chr(156)] = '&oelig;';    // Latin Small Ligature OE 
+						$trans[chr(159)] = '&Yuml;';    // Latin Capital Letter Y With Diaeresis 
+						$trans['euro'] = '&euro;';    // euro currency symbol 
+						ksort($trans); 
+						 
+						foreach ($trans as $k => $v) {
+							$text = str_replace($v, $k, $text);
+						}
+					 
+						// 3) remove <p>, <br/> ...
+						$text = strip_tags($text); 
+						 
+						// 4) &amp; => & &quot; => '
+						$text = html_entity_decode($text);
+						 
+						// 5) remove Windows-1252 symbols like "TradeMark", "Euro"...
+						$text = preg_replace('/[^(\x20-\x7F)]*/','', $text); 
+						 
+						$targets=array('\r\n','\n','\r','\t');
+						$results=array(" "," "," ","");
+						$text = str_replace($targets,$results,$text);
+					 
+						//XML compatible
+						/*
+						$text = str_replace("&", "and", $text);
+						$text = str_replace("<", ".", $text);
+						$text = str_replace(">", ".", $text);
+						$text = str_replace("\\", "-", $text);
+						$text = str_replace("/", "-", $text);
+						*/
+						 
+						return ($text);
+					}
+					]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/catalog/product_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	
+<!-- Catalog -->  
+    <!-- Controller --> 
+
+    <file path="admin/controller/catalog/category.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_add'] = $this->language->get('button_add');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('catalog/category/export', 'token=' . $this->session->data['token'], 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+			
+				$this->load->model('catalog/category');
+				
+				$categories= array();
+				
+				$data =array();
+		
+				$results = $this->model_catalog_category->getCategories($data);
+
+				foreach ($results as $result) {
+		
+					$categories[] = array(
+						'category_id' => $result['category_id'],
+						'name'        => $result['name'],
+						'sort_order'  => $result['sort_order']
+					);
+				}	
+						
+						$categories_data = array();
+						
+						$categories_column=array();
+						
+						$categories_column = array('Category ID', 'Category Name', 'Sort Order');
+							
+						$categories_data[0]=   $categories_column;   
+						
+						foreach($categories as $categories_row)
+						{
+							$categories_data[]=   $categories_row;            
+						}
+						require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+						$filename='category_list_'.date('Y-m-d _ H:i:s');
+						$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+						// Create new PHPExcel object
+
+						$objPHPExcel = new PHPExcel();
+
+						
+						$objPHPExcel->getActiveSheet()->fromArray($categories_data, null, 'A1');
+						// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+						$objPHPExcel->setActiveSheetIndex(0);
+
+						// Save Excel 95 file
+
+						$callStartTime = microtime(true);
+						$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+						
+						//Setting the header type
+						header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+						header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+						
+						header('Cache-Control: max-age=0');
+
+						$objWriter->save('php://output');
+
+					}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/catalog/category_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a> <a href="<?php echo $repair; ?>" data-toggle="tooltip" title="<?php echo $button_rebuild; ?>" class="btn btn-default"><i class="fa fa-refresh"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a> <a href="<?php echo $repair; ?>" data-toggle="tooltip" title="<?php echo $button_rebuild; ?>" class="btn btn-default"><i class="fa fa-refresh"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a> <a href="<?php echo $repair; ?>" data-toggle="tooltip" title="<?php echo $button_rebuild; ?>" class="btn btn-default"><i class="fa fa-refresh"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	
+	
+    
+<!-- Controller --> 
+  
+    <file path="admin/controller/customer/customer.php">
+		<operation>
+			<search position="before"><![CDATA[$data['stores'] = $this->model_setting_store->getStores();]]></search>
+			<add><![CDATA[$data['export'] = $this->url->link('customer/customer/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+				$data['button_export'] = $this->language->get('button_export');
+				$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+				]]></add>
+		</operation>    
+                
+        	<operation>
+			<search position="before"><![CDATA[public function address() {]]></search>
+            <add><![CDATA[ public function export($getarr='') {
+        
+       
+        	$data = array();
+        
+        $customers = array();
+        
+        $customers_column=array();
+        
+        $this->load->model('customer/customer');
+        
+        $customers_column = array('Customer ID', 'Customer Name', 'Email', 'Telephone', 'Address', 'City', 'Post Code', 'Country', 'IP', 'Status', 'Approved', 'Date Added', 'Customer Group');
+            
+        $customers[0] = $customers_column;  
+        
+        $customers_list = $this->model_customer_customer->getCustomerstoexport($data);
+        
+        
+        foreach($customers_list as $customer_row)
+        {
+            $customers[]=$customer_row;
+        }
+       require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+		$filename='customerlist_'.date('Y-m-d _ H:i:s');
+		$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+		// Create new PHPExcel object
+
+		$objPHPExcel = new PHPExcel();
+
+						
+		$objPHPExcel->getActiveSheet()->fromArray($customers, null, 'A1');
+		// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+		$objPHPExcel->setActiveSheetIndex(0);
+
+		// Save Excel 95 file
+
+		$callStartTime = microtime(true);
+		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+						
+		//Setting the header type
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+						
+		header('Cache-Control: max-age=0');
+
+		$objWriter->save('php://output');
+	}]]></add>
+		</operation>
+        
+        
+        
+        
+	</file>
+    
+<!-- Model -->
+
+	<file path="admin/model/customer/customer.php">
+		<operation>
+			<search position="before"><![CDATA[public function getCustomers($data = array()) {]]></search>
+			<add><![CDATA[public function getCustomerstoexport($data = array()) {
+    	 
+$sql = "SELECT c.customer_id, CONCAT(c.firstname, ' ', c.lastname) AS name, c.email, c.telephone, CONCAT(oca.address_1,oca.address_2) AS address, oca.city, oca.postcode, occ.name as Country, c.ip, IF( c.status = 1, 'Enabled', 'Disabled' ) AS status, IF( c.approved = 1, 'Yes', 'No' ) AS approved, c.date_added, cgd.name AS customer_group FROM " . DB_PREFIX . "customer c LEFT JOIN " . DB_PREFIX . "customer_group_description cgd ON (c.customer_group_id = cgd.customer_group_id) LEFT JOIN " . DB_PREFIX . "address oca ON (c.address_id=oca.address_id) LEFT JOIN " . DB_PREFIX . "country occ ON (oca.country_id=occ.country_id) WHERE cgd.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+
+		$implode = array();
+		
+		if (!empty($data['filter_name'])) {
+			$implode[] = "CONCAT(c.firstname, ' ', c.lastname) LIKE '%" . $this->db->escape($data['filter_name']) . "%'";
+		}
+		
+		if (!empty($data['filter_email'])) {
+			$implode[] = "c.email LIKE '" . $this->db->escape($data['filter_email']) . "%'";
+		}
+
+		if (isset($data['filter_newsletter']) && !is_null($data['filter_newsletter'])) {
+			$implode[] = "c.newsletter = '" . (int)$data['filter_newsletter'] . "'";
+		}	
+				
+		if (!empty($data['filter_customer_group_id'])) {
+			$implode[] = "c.customer_group_id = '" . (int)$data['filter_customer_group_id'] . "'";
+		}	
+			
+		if (!empty($data['filter_ip'])) {
+			$implode[] = "c.customer_id IN (SELECT customer_id FROM " . DB_PREFIX . "customer_ip WHERE ip = '" . $this->db->escape($data['filter_ip']) . "')";
+		}	
+				
+		if (isset($data['filter_status']) && !is_null($data['filter_status'])) {
+			$implode[] = "c.status = '" . (int)$data['filter_status'] . "'";
+		}	
+		
+		if (isset($data['filter_approved']) && !is_null($data['filter_approved'])) {
+			$implode[] = "c.approved = '" . (int)$data['filter_approved'] . "'";
+		}	
+				
+		if (!empty($data['filter_date_added'])) {
+			$implode[] = "DATE(c.date_added) = DATE('" . $this->db->escape($data['filter_date_added']) . "')";
+		}
+		
+		if ($implode) {
+			$sql .= " AND " . implode(" AND ", $implode);
+		}
+		
+		$sort_data = array(
+			'name',
+			'c.email',
+			'customer_group',
+			'c.status',
+			'c.approved',
+			'c.ip',
+			'c.date_added'
+		);	
+			
+		if (isset($data['sort']) && in_array($data['sort'], $sort_data)) {
+			$sql .= " ORDER BY " . $data['sort'];	
+		} else {
+			$sql .= " ORDER BY name";	
+		}
+			
+		if (isset($data['order']) && ($data['order'] == 'DESC')) {
+			$sql .= " DESC";
+		} else {
+			$sql .= " ASC";
+		}
+		
+		if (isset($data['start']) || isset($data['limit'])) {
+			if ($data['start'] < 0) {
+				$data['start'] = 0;
+			}			
+
+			if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			}	
+			
+			$sql .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
+		}		
+
+		$query = $this->db->query($sql);
+        
+		return $query->rows;	
+	}]]></add>
+		</operation>
+	</file>
+
+<!-- View -->
+	<file path="admin/view/template/customer/customer_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo "Export"; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+    
+    
+<!-- Order list -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/sale/order.php">
+		<operation>
+			<search position="before"><![CDATA[$data['invoice'] = $this->url->link('sale/order/invoice', 'token=' . $this->session->data['token'], true);]]></search>
+			<add><![CDATA[
+				$data['export'] = $this->url->link('sale/order/export', 'token=' . $this->session->data['token'] . $url, true);
+				$data['button_export'] = $this->language->get('button_export');
+				$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>          
+        
+        	<operation>
+			<search position="before"><![CDATA[protected function getList() {]]></search>
+            <add><![CDATA[public function export() {
+
+		$data = array(
+		);
+                
+        $orders = array();
+        
+        $orders_column=array();
+        
+        $this->load->model('sale/order');
+        
+        $results = $this->model_sale_order->getOrdersexport($data); 
+        
+        $orders_list = array();
+        
+        	foreach ($results as $result) {
+
+			$orders_list[] = array(
+				'order_id'      => $result['order_id'],
+				'customer_group'=> $result['customer_group'],
+				'customer_name'      => $result['customer_name'],
+				'email'=> $result['email'],
+				'telephone'      => $result['telephone'],
+				'payment_address'=> $result['payment_address'],
+				'shipping_address'      => $result['shipping_address'],
+				'payment_method'=> $result['payment_method'],
+				'shipping_method'        => $result['shipping_method'],
+				'total'         => $this->currency->format($result['total'], $result['currency_code'], $result['currency_value']),
+				'currency_code'    => $result['currency_code'],
+				'date_added'  =>  $result['date_added'],
+				'order_status' => $result['order_status'],
+				
+			);
+		}
+        
+        
+        
+       
+        $orders_column = array('Order ID', 'Customer Group', 'Customer Name', 'Email', 'Telephone', 'Payment Address', 'Shipping Address', 'Payment Method', 'Shipping Method', 'Total', 'Currency Code', 'Date Added', 'Order Status');
+            
+        $orders[0]=   $orders_column;   
+        
+        foreach($orders_list as $orders_row)
+        {
+            $orders[]=   $orders_row;            
+        }     
+       require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+		$filename='orderslist_'.date('Y-m-d _ H:i:s');
+		$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+		// Create new PHPExcel object
+
+		$objPHPExcel = new PHPExcel();
+
+						
+		$objPHPExcel->getActiveSheet()->fromArray($orders, null, 'A1');
+		// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+		$objPHPExcel->setActiveSheetIndex(0);
+
+		// Save Excel 95 file
+
+		$callStartTime = microtime(true);
+		$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+						
+		//Setting the header type
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+						
+		header('Cache-Control: max-age=0');
+
+		$objWriter->save('php://output');
+
+	}]]></add>
+		</operation>
+        
+	</file>
+    
+<!-- Model -->
+
+	<file path="admin/model/sale/order.php">
+		<operation>
+			<search position="before"><![CDATA[public function getOrders($data = array()) {]]></search>
+			<add><![CDATA[public function getOrdersexport($data = array()) {
+ $sql = "SELECT o.order_id, cgd.name as customer_group, CONCAT(o.firstname, ' ', o.lastname) AS customer_name,
+email, telephone, CONCAT(o.payment_firstname, ' ', o.payment_lastname,',',o.payment_address_1,',',o.payment_address_2,',',o.payment_city,'-',o.payment_postcode) AS payment_address,
+CONCAT(o.shipping_firstname, ' ', o.shipping_lastname,',',o.shipping_address_1,',',o.shipping_address_2,',', o.shipping_city,'-',o.shipping_postcode) AS shipping_address,
+ o.payment_method, o.shipping_method, o.total, o.currency_code,o.currency_value,
+ o.date_added, oos.name as order_status
+FROM `" . DB_PREFIX . "order` o
+LEFT JOIN " . DB_PREFIX . "customer_group_description cgd ON (o.customer_group_id = cgd.customer_group_id)
+LEFT JOIN " . DB_PREFIX . "order_status oos ON (o.order_status_id = oos.order_status_id) WHERE cgd.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+
+
+
+
+		if (isset($data['filter_order_status_id']) && !is_null($data['filter_order_status_id'])) {
+
+			$sql .= " AND o.order_status_id = '" . (int)$data['filter_order_status_id'] . "'";
+
+		} else {
+
+			$sql .= " AND o.order_status_id > '0'";
+
+		}
+
+
+
+		if (!empty($data['filter_order_id'])) {
+
+			$sql .= " AND o.order_id = '" . (int)$data['filter_order_id'] . "'";
+
+		}
+
+
+
+		if (!empty($data['filter_customer'])) {
+
+			$sql .= " AND CONCAT(o.firstname, ' ', o.lastname) LIKE '%" . $this->db->escape($data['filter_customer']) . "%'";
+
+		}
+
+
+
+		if (!empty($data['filter_date_added'])) {
+
+			$sql .= " AND DATE(o.date_added) = DATE('" . $this->db->escape($data['filter_date_added']) . "')";
+
+		}
+
+		
+
+		if (!empty($data['filter_date_modified'])) {
+
+			$sql .= " AND DATE(o.date_modified) = DATE('" . $this->db->escape($data['filter_date_modified']) . "')";
+
+		}
+
+		
+
+		if (!empty($data['filter_total'])) {
+
+			$sql .= " AND o.total = '" . (float)$data['filter_total'] . "'";
+
+		}
+
+
+
+		$sort_data = array(
+
+			'o.order_id',
+
+			'customer',
+
+			'status',
+
+			'o.date_added',
+
+			'o.date_modified',
+
+			'o.total'
+
+		);
+
+
+
+		if (isset($data['sort']) && in_array($data['sort'], $sort_data)) {
+
+			$sql .= " ORDER BY " . $data['sort'];
+
+		} else {
+
+			$sql .= " ORDER BY o.order_id";
+
+		}
+
+
+
+		if (isset($data['order']) && ($data['order'] == 'DESC')) {
+
+			$sql .= " DESC";
+
+		} else {
+
+			$sql .= " ASC";
+
+		}
+
+
+
+		if (isset($data['start']) || isset($data['limit'])) {
+
+			if ($data['start'] < 0) {
+
+				$data['start'] = 0;
+
+			}
+
+
+
+			if ($data['limit'] < 1) {
+
+				$data['limit'] = 20;
+
+			}
+
+
+
+			$sql .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
+
+		}
+
+		$query = $this->db->query($sql);
+
+
+
+		return $query->rows;
+
+	}]]></add>
+		</operation>
+	</file>
+
+<!-- View -->
+
+	<file path="admin/view/template/sale/order_list.tpl">
+		<operation>
+			<search position="before"><![CDATA[<button type="submit" id="button-shipping" form="form-order" formaction="<?php echo $shipping; ?>" data-toggle="tooltip" title="<?php echo $button_shipping_print; ?>" class="btn btn-info"><i class="fa fa-truck"></i></button>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1"){?>
+			<a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo "Export"; ?>" class="btn btn-success"><i class="fa fa-download"></i></a>
+			<?php } else { ?>
+			<button type="submit" id="button-shipping" form="form-order" formaction="<?php echo $shipping; ?>" data-toggle="tooltip" title="<?php echo $button_shipping_print; ?>" class="btn btn-info"><i class="fa fa-truck"></i></button>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+		
+<!-- Product Returns -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/sale/return.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('sale/return/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() { ]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+				$this->load->model('sale/return');
+
+				
+				$returns= array();
+
+				$data = array(
+				
+				);
+
+				$results = $this->model_sale_return->getReturns($data);
+
+				foreach ($results as $result) {
+					$returns[] = array(
+						'return_id'     => $result['return_id'],
+						'order_id'      => $result['order_id'],
+						'customer'      => $result['customer'],
+						'product'       => $result['product'],
+						'model'         => $result['model'],
+						'status'        => $result['status'],
+						'date_added'    => date($this->language->get('date_format_short'), strtotime($result['date_added'])),	
+						'date_modified' => date($this->language->get('date_format_short'), strtotime($result['date_modified'])),				
+						'selected'      => isset($this->request->post['selected']) && in_array($result['return_id'], $this->request->post['selected'])
+					);
+				}	
+						
+						$returns_data = array();
+						
+						$returns_column=array();
+						
+						$returns_column = array('Return ID', 'Order ID', 'Customer', 'Product', 'Model','Status','Date Added', 'Date Modified');
+							
+						$returns_data[0]=   $returns_column;   
+						
+						foreach($returns as $returns_row)
+						{
+							$returns_data[]=   $returns_row;            
+						}
+						require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+						$filename='product_returns_list_'.date('Y-m-d _ H:i:s');
+						$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+						// Create new PHPExcel object
+
+						$objPHPExcel = new PHPExcel();
+
+												
+						$objPHPExcel->getActiveSheet()->fromArray($returns_data, null, 'A1');
+						// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+						$objPHPExcel->setActiveSheetIndex(0);
+
+						// Save Excel 95 file
+
+						$callStartTime = microtime(true);
+						$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+												
+						//Setting the header type
+						header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+						header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+												
+						header('Cache-Control: max-age=0');
+
+						$objWriter->save('php://output');
+
+					}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/sale/return_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+<!-- Affliate List -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/marketing/affiliate.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('marketing/affiliate/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[protected function getList() {]]></search>
+            <add><![CDATA[public function export() {
+	
+
+		
+		$data = array(
+			
+		);
+		
+		$this->load->model('marketing/affiliate');
+		
+		$results = $this->model_marketing_affiliate->getAffiliates($data);
+		
+		$affiliates = array();
+		
+		foreach ($results as $result) {
+			$affiliates[] = array(
+				'affiliate_id' => $result['affiliate_id'],
+				'name'         => $result['name'],
+				'email'        => $result['email'],
+				'balance'      => $this->currency->format($result['balance'], $this->config->get('config_currency')),
+				'status'       => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+				'approved'     => ($result['approved'] ? $this->language->get('text_yes') : $this->language->get('text_no')),
+				'date_added'   => date($this->language->get('date_format_short'), strtotime($result['date_added'])),
+				'selected'     => isset($this->request->post['selected']) && in_array($result['affiliate_id'], $this->request->post['selected'])
+			);
+		}	
+				
+				$affiliates_data = array();
+				
+				$affiliates_column=array();
+				
+				$affiliates_column = array('Affliate ID', 'Affliate Name', 'Email', 'Balance', 'Status', 'Approved', 'Date Added');
+					
+				$affiliates_data[0]=   $affiliates_column;   
+				
+				foreach($affiliates as $affiliates_row)
+				{
+					$affiliates_data[]=   $affiliates_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='affliate_list_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+										
+				$objPHPExcel->getActiveSheet()->fromArray($affiliates_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+										
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+										
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/marketing/affiliate_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+   
+<!-- Coupon List -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/marketing/coupon.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_add'] = $this->language->get('button_add');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('marketing/coupon/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[protected function getList() {]]></search>
+            <add><![CDATA[public function export() {
+		
+
+		$data['coupons'] = array();
+
+		$data = array(
+			
+		);
+		
+		
+		$this->load->model('marketing/coupon');
+				
+		$coupon_total = $this->model_marketing_coupon->getTotalCoupons();
+
+		$results = $this->model_marketing_coupon->getCoupons($data);
+
+		
+		$coupons = array();
+		
+		foreach ($results as $result) {
+			$coupons[] = array(
+				'coupon_id'  => $result['coupon_id'],
+				'name'       => $result['name'],
+				'code'       => $result['code'],
+				'discount'   => $result['discount'],
+				'date_start' => date($this->language->get('date_format_short'), strtotime($result['date_start'])),
+				'date_end'   => date($this->language->get('date_format_short'), strtotime($result['date_end'])),
+				'status'     => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'))
+			);
+		}	
+				
+				$coupons_data = array();
+				
+				$coupons_column=array();
+				
+				$coupons_column = array('Coupon ID', 'Coupon Name', 'Coupon Code', 'Discount', 'Start Date', 'End Date', 'Status');
+					
+				$coupons_data[0]=   $coupons_column;   
+				
+				foreach($coupons as $coupons_row)
+				{
+					$coupons_data[]=   $coupons_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='coupons_list_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($coupons_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');				
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/marketing/coupon_list.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a> <a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } else { ?>
+			<div class="pull-right"><a href="<?php echo $add; ?>" data-toggle="tooltip" title="<?php echo $button_add; ?>" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+    	
+    	
+<!-- Gift Voucher List -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/sale/voucher.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_add'] = $this->language->get('button_add');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('sale/voucher/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[protected function getList() {]]></search>
+            <add><![CDATA[public function export() {
+		
+
+		$data = array(
+			
+		);
+
+		$this->load->model('sale/voucher');
+		
+		$results = $this->model_sale_voucher->getVouchers($data);
+		
+		$vouchers = array();
+		
+		foreach ($results as $result) {
+			$vouchers[] = array(
+				'voucher_id' => $result['voucher_id'],
+				'code'       => $result['code'],
+				'from'       => $result['from_name'],
+				'to'         => $result['to_name'],
+				'theme'      => $result['theme'],
+				'amount'     => $this->currency->format($result['amount'], $this->config->get('config_currency')),
+				'status'     => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+				'date_added' => date($this->language->get('date_format_short'), strtotime($result['date_added']))
+			);
+		}	
+				
+				$vouchers_data = array();
+				
+				$vouchers_column=array();
+				
+				$vouchers_column = array('Voucher ID', 'Voucher Code', 'From', 'To', 'Theme', 'Amount', 'Status', 'Date Added');
+					
+				$vouchers_data[0]=   $vouchers_column;   
+				
+				foreach($vouchers as $vouchers_row)
+				{
+					$vouchers_data[]=   $vouchers_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='vouchers_list_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($vouchers_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/sale/voucher_list.tpl">
+		<operation>
+			<search position="before"><![CDATA[<button type="button" id="button-send" data-toggle="tooltip" title="<?php echo $button_send; ?>" class="btn btn-primary"><i class="fa fa-envelope"></i></button>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1"){ ?>
+			<a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a>
+			<?php } else { ?>
+			<button type="button" id="button-send" data-toggle="tooltip" title="<?php echo $button_send; ?>" class="btn btn-primary"><i class="fa fa-envelope"></i></button>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+		
+		
+	      
+<!-- Sale Orders Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/sale_order.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/sale_order/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+
+				$this->load->model('report/sale');
+
+				$orders = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_sale->getOrders($data);
+
+				foreach ($results as $result) {
+					$orders[] = array(
+						'date_start' => date($this->language->get('date_format_short'), strtotime($result['date_start'])),
+						'date_end'   => date($this->language->get('date_format_short'), strtotime($result['date_end'])),
+						'orders'     => $result['orders'],
+						'products'   => $result['products'],
+						'tax'        => $this->currency->format($result['tax'], $this->config->get('config_currency')),
+						'total'      => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}
+				
+				$orders_data = array();
+				
+				$orders_column=array();
+				
+				$orders_column = array('Start Date', 'End Date', 'No Of Orders', 'No Of Products', 'Tax', 'Total');
+					
+				$orders_data[0]=   $orders_column;   
+				
+				foreach($orders as $orders_row)
+				{
+					$orders_data[]=   $orders_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='sales_orders_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($orders_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/sale_order.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+   
+<!-- Sale Tax Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/sale_tax.php">
+		
+    <operation>
+			<search position="before" offset="0"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/sale_tax/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+						
+				
+				$this->load->model('report/sale');
+
+				$data['orders'] = array();
+
+				$data = array(
+					
+				);
+
+				$orders= array();
+
+				$results = $this->model_report_sale->getTaxes($data);
+
+				
+				foreach ($results as $result) {
+					$orders[] = array(
+						'date_start' => date($this->language->get('date_format_short'), strtotime($result['date_start'])),
+						'date_end'   => date($this->language->get('date_format_short'), strtotime($result['date_end'])),
+						'title'      => $result['title'],
+						'orders'     => $result['orders'],
+						'total'      => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}
+				
+				$orders_data = array();
+				
+				$orders_column=array();
+				
+				$orders_column = array('Start Date', 'End Date', 'Tax Title', 'No. Orders', 'Total');
+					
+				$orders_data[0]=   $orders_column;   
+				
+				foreach($orders as $orders_row)
+				{
+					$orders_data[]=   $orders_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='sales_tax_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($orders_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');	
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/sale_tax.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+<!-- Sale Shipping Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/sale_shipping.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/sale_shipping/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+				$this->load->model('report/sale');
+
+				$orders= array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_sale->getShipping($data);
+
+				
+				foreach ($results as $result) {
+					$orders[] = array(
+						'date_start' => date($this->language->get('date_format_short'), strtotime($result['date_start'])),
+						'date_end'   => date($this->language->get('date_format_short'), strtotime($result['date_end'])),
+						'title'      => $result['title'],
+						'orders'     => $result['orders'],
+						'total'      => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}
+				
+				$orders_data = array();
+				
+				$orders_column=array();
+				
+				$orders_column = array('Start Date', 'End Date', 'Shipping Title', 'No. Orders', 'Total');
+					
+				$orders_data[0]=   $orders_column;   
+				
+				foreach($orders as $orders_row)
+				{
+					$orders_data[]=   $orders_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='sales_shipping_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($orders_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/sale_shipping.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+  
+  
+  
+	
+<!-- Sale Return Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/sale_return.php">
+		
+    <operation>
+			<search position="before" offset="0"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/sale_return/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() { ]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+				$this->load->model('report/return');
+
+				$returns = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_return->getReturns($data);
+				
+				foreach ($results as $result) {
+					$returns[] = array(
+						'date_start' => date($this->language->get('date_format_short'), strtotime($result['date_start'])),
+						'date_end'   => date($this->language->get('date_format_short'), strtotime($result['date_end'])),
+						'returns'    => $result['returns']
+					);
+				}
+				
+				$returns_data = array();
+				
+				$returns_column=array();
+				
+				$returns_column = array('Start Date', 'End Date', 'No. Returns');
+					
+				$returns_data[0]=   $returns_column;   
+				
+				foreach($returns as $returns_row)
+				{
+					$returns_data[]=   $returns_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='sales_returns_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($returns_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/sale_return.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+  
+  
+  
+<!-- Sale Coupon Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/sale_coupon.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/sale_coupon/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+				$this->load->model('report/coupon');
+
+				$coupons = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_coupon->getCoupons($data);
+				
+				foreach ($results as $result) {
+					$coupons[] = array(
+						'name'   => $result['name'],
+						'code'   => $result['code'],
+						'orders' => $result['orders'],
+						'total'  => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}
+				
+				$coupons_data = array();
+				
+				$coupons_column=array();
+				
+				$coupons_column = array('Coupon Name', 'Coupon Code', 'Orders', 'Total');
+					
+				$coupons_data[0]=   $coupons_column;   
+				
+				foreach($coupons as $coupons_row)
+				{
+					$coupons_data[]=   $coupons_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='sales_coupons_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($coupons_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/sale_coupon.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+  
+  
+<!-- Product Purchased Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/product_purchased.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/product_purchased/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+		
+	
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+		
+				
+
+				$url = '';
+
+				if (isset($this->request->get['filter_date_start'])) {
+					$url .= '&filter_date_start=' . $this->request->get['filter_date_start'];
+				}
+
+				if (isset($this->request->get['filter_date_end'])) {
+					$url .= '&filter_date_end=' . $this->request->get['filter_date_end'];
+				}
+
+				if (isset($this->request->get['filter_order_status_id'])) {
+					$url .= '&filter_order_status_id=' . $this->request->get['filter_order_status_id'];
+				}
+
+				if (isset($this->request->get['page'])) {
+					$url .= '&page=' . $this->request->get['page'];
+				}
+
+
+				$this->load->model('report/product');
+
+				$products_list= array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_product->getPurchased($data);
+
+				foreach ($results as $result) {
+					$products_list[]= array(
+						'name'       => $result['name'],
+						'model'      => $result['model'],
+						'quantity'   => $result['quantity'],
+						'total'      => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}
+				
+				$products = array();
+				
+				$products_column=array();
+				
+				$products_column = array('Product Name', 'Model', 'Quantity', 'Total');
+					
+				$products[0]=   $products_column;   
+				
+				foreach($products_list as $products_row)
+				{
+					$products[]=   $products_row;            
+				}     
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='product_purchased_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($products, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');	
+
+			}]]></add>
+		</operation>
+        
+	</file>
+
+<!-- View -->
+
+	<file path="admin/view/template/report/product_purchased.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+    
+ 
+	<!-- Customers Online Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/customer_online.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/customer_online/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+				
+
+				
+				$this->load->model('report/customer');
+				$this->load->model('customer/customer');
+
+				$customers = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_customer->getCustomersOnline($data);
+
+				foreach ($results as $result) {
+					
+
+					$customer_info = $this->model_customer_customer->getCustomer($result['customer_id']);
+
+					if ($customer_info) {
+						$customer = $customer_info['firstname'] . ' ' . $customer_info['lastname'];
+					} else {
+						$customer = $this->language->get('text_guest');
+					}
+
+					$customers[] = array(
+						'ip'         => $result['ip'],
+						'customer'   => $customer,
+						'url'        => $result['url'],
+						'referer'    => $result['referer'],
+						'date_added' => date('d/m/Y H:i:s', strtotime($result['date_added']))
+					);
+				}	
+				
+				$customers_data = array();
+				
+				$customers_column=array();
+				
+				$customers_column = array('IP', 'Customer', 'Last Visited Page', 'Referer', 'Last Click');
+					
+				$customers_data[0]=   $customers_column;   
+				
+				foreach($customers as $customers_row)
+				{
+					$customers_data[]=   $customers_row;            
+				}     
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='customers_online_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($customers_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');	
+
+			}]]></add>
+		</operation>
+		</file>
+		<!-- View -->
+		
+			<file path="admin/view/template/report/customer_online.tpl">
+				<operation>
+					<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+					<add><![CDATA[
+					<?php if($exportalldatafree_status=="1") {?>
+					<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+					<?php } else { ?>
+					<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+					<?php } ?>
+					]]></add>
+				</operation>
+			</file>
+		 
+	
+	<!-- Customer Orders Report-->  
+
+    <!-- Controller --> 
+    <file path="admin/controller/report/customer_order.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/customer_order/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+		
+				
+
+				$this->load->model('report/customer');
+
+				$customers_list = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_customer->getOrders($data);
+				
+				foreach ($results as $result) {
+					
+
+					$customers_list[] = array(
+						'customer'       => $result['customer'],
+						'email'          => $result['email'],
+						'customer_group' => $result['customer_group'],
+						'status'         => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+						'orders'         => $result['orders'],
+						'products'       => $result['products'],
+						'total'          => $this->currency->format($result['total'], $this->config->get('config_currency')),
+					);
+				}
+
+				
+				$customers = array();
+				
+				$customers_column=array();
+				
+				$customers_column = array('Customer Name', 'Email', 'Customer Group', 'Status', 'Orders', 'Products', 'Total');
+					
+				$customers[0]=   $customers_column;   
+				
+				foreach($customers_list as $customers_row)
+				{
+					$customers[]=   $customers_row;            
+				}     
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='ordered_customer_list_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($customers, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+        
+	</file>
+
+<!-- View -->
+
+	<file path="admin/view/template/report/customer_order.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+<!-- Customer Reward Points Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/customer_reward.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/customer_reward/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+				
+				
+				$this->load->model('report/customer');
+
+				$customers = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_customer->getRewardPoints($data);
+				
+				foreach ($results as $result) {
+					$customers[] = array(
+						'customer'       => $result['customer'],
+						'email'          => $result['email'],
+						'customer_group' => $result['customer_group'],
+						'status'         => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+						'points'         => $result['points'],
+						'orders'         => $result['orders'],
+						'total'          => $this->currency->format($result['total'], $this->config->get('config_currency')),
+					);
+				}	
+				
+				$customers_data = array();
+				
+				$customers_column=array();
+				
+				$customers_column = array('Customer Name', 'Email', 'Customer Group', 'Status', 'Reward Points', 'No. Orders', 'Total');
+					
+				$customers_data[0]=   $customers_column;   
+				
+				foreach($customers as $customers_row)
+				{
+					$customers_data[]=   $customers_row;            
+				}     
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='customer_reward_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($customers_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/customer_reward.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+  
+	
+	
+<!-- Customer Credit Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/customer_credit.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/customer_credit/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+		
+				
+
+				$this->load->model('report/customer');
+
+				$customers = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_customer->getCredit($data);
+				
+				foreach ($results as $result) {
+					$customers[] = array(
+						'customer'       => $result['customer'],
+						'email'          => $result['email'],
+						'customer_group' => $result['customer_group'],
+						'status'         => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+						'total'          => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}	
+				
+				$customers_data = array();
+				
+				$customers_column=array();
+				
+				$customers_column = array('Customer Name', 'Email', 'Customer Group', 'Status', 'Total');
+					
+				$customers_data[0]=   $customers_column;   
+				
+				foreach($customers as $customers_row)
+				{
+					$customers_data[]=   $customers_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='customer_credit_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($customers_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/customer_credit.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+
+
+<!-- Affiliate Commission Report -->  
+    <!-- Controller --> 
+  
+    <file path="admin/controller/report/affiliate.php">
+		
+    <operation>
+			<search position="before"><![CDATA[$data['button_filter'] = $this->language->get('button_filter');]]></search>
+            <add><![CDATA[$data['button_export'] = $this->language->get('button_export');
+			$data['export'] = $this->url->link('report/affiliate/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['exportalldatafree_status'] = $this->config->get('exportalldatafree_status');
+			]]></add>
+		</operation>    
+        	
+        	<operation>
+			<search position="before"><![CDATA[public function index() {]]></search>
+            <add><![CDATA[public function export() {
+		
+				
+
+				$this->load->model('report/affiliate');
+
+				$affiliates = array();
+
+				$data = array(
+					
+				);
+
+				$results = $this->model_report_affiliate->getCommission($data);
+				
+				foreach ($results as $result) {
+					$affiliates[] = array(
+						'affiliate'  => $result['affiliate'],
+						'email'      => $result['email'],
+						'status'     => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
+						'commission' => $this->currency->format($result['commission'], $this->config->get('config_currency')),
+						'orders'     => $result['orders'],
+						'total'      => $this->currency->format($result['total'], $this->config->get('config_currency'))
+					);
+				}	
+				
+				$affiliates_data = array();
+				
+				$affiliates_column=array();
+				
+				$affiliates_column = array('Affiliate Name', 'Email', 'Status', 'Commission', 'No. Orders', 'Total');
+					
+				$affiliates_data[0]=   $affiliates_column;   
+				
+				foreach($affiliates as $affiliates_row)
+				{
+					$affiliates_data[]=   $affiliates_row;            
+				}
+				require_once(DIR_SYSTEM . 'library/PHPExcel.php');
+				$filename='affliate_commission_report_'.date('Y-m-d _ H:i:s');
+				$filename = preg_replace('/[^aA-zZ0-9\_\-]/', '', $filename);
+				// Create new PHPExcel object
+
+				$objPHPExcel = new PHPExcel();
+
+								
+				$objPHPExcel->getActiveSheet()->fromArray($affiliates_data, null, 'A1');
+				// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+				$objPHPExcel->setActiveSheetIndex(0);
+
+				// Save Excel 95 file
+
+				$callStartTime = microtime(true);
+				$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel5');
+								
+				//Setting the header type
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header("Content-Disposition: attachment; filename=\"" . $filename . ".xls\"");
+								
+				header('Cache-Control: max-age=0');
+
+				$objWriter->save('php://output');
+
+			}]]></add>
+		</operation>
+	</file>
+<!-- View -->
+
+	<file path="admin/view/template/report/affiliate.tpl">
+		<operation>
+			<search position="after" offset="2"><![CDATA[<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>]]></search>
+			<add><![CDATA[
+			<?php if($exportalldatafree_status=="1") { ?>
+			<div class="pull-right"><a href="<?php echo $export; ?>" data-toggle="tooltip" title="<?php echo $button_export; ?>" class="btn btn-success"><i class="fa fa-download"></i></a></div>
+			<?php } else { ?>
+			<li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+			<?php } ?>
+			]]></add>
+		</operation>
+	</file>		
+	
+	
+</modification>

@@ -1,0 +1,232 @@
+---------- Date: 2017-08-26 12:21:05 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=tool/export_import&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_button_export_language.xml
+   id        : Export customer list and order list
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/language/english/english.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/customer.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/model/sale/customer.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/customer_list.tpl] (SKIPPED)
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_export_excel_bulk.xml
+   id        : Export Excel Data Bulk 
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+VQModObject::parseMods - Could not resolve path for [admin/language/english/english.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/catalog/product_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/catalog/category_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/customer/customer_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/order_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/return_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/marketing/coupon_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/voucher_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/report/report.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/report/report.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_order.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_tax.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_shipping.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_return.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_coupon.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/product_purchased.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/customer_order.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/customer_reward.php] (SKIPPED)
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_export_excel.xml
+   id        : Export Excel Reports
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+VQModObject::parseMods - Could not resolve path for [admin/language/english/default.php] (SKIPPED)
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/controller/report/affiliate_commission.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/report/affiliate_commission.tpl] (SKIPPED)
+
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_sales_section_export_excel.xml
+   id        : Export Excel : Sales 
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/affiliate.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/affiliate_list.tpl] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/coupon.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/coupon_list.tpl] (SKIPPED)
+
+VQMod::_parseMods - FILE "C:\xampp\htdocs\gitdev\vqmod/xml/vqmod_opencart.xml" REQUIRES VQMOD "2.6.0" OR ABOVE AND HAS BEEN SKIPPED
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 12:25:42 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/sale_order&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/sale_order.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 12:26:20 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/sale_tax&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/sale_tax.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 12:26:55 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/sale_shipping&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/sale_shipping.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 12:27:32 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/sale_return&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/sale_return.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 12:28:05 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/sale_coupon&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/sale_coupon.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 13:42:38 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=customer/customer&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_export_excel_bulk.xml
+   id        : Export Excel Data Bulk 
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+
+File Name    : admin/controller/customer/customer.php(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): $data['add'] = $this->url->link('customer/customer/add', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 13:48:55 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/product_purchased&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/product_purchased.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 13:49:49 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/customer_online&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/customer_online.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 13:51:01 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/customer_order&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/customer_order.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 13:51:44 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=report/customer_reward&token=f1WZzrlOhyREH4639QWAE3MrWCKrWa1N
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+
+File Name    : admin/view/template/report/customer_reward.tpl(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): <a onclick="filter();" class="button"><?php echo $button_filter; ?></a>
+
+----------------------------------------------------------------------
+
+
+---------- Date: 2017-08-26 17:10:56 ~ IP : ::1 ----------
+REQUEST URI : /gitdev/admin/index.php?route=customer/customer&token=4e6fFzUICVMXdnIhZ9EBrGWwZS0pAm1E
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitdev\vqmod/xml/irsfree_export_excel_bulk.xml
+   id        : Export Excel Data Bulk 
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+
+File Name    : admin/controller/customer/customer.php(0)
+VQModObject::applyMod - SEARCH NOT FOUND (ABORTING MOD): $data['add'] = $this->url->link('customer/customer/add', 'token=' . $this->session->data['token'] . $url, 'SSL');
+
+----------------------------------------------------------------------
+
+

@@ -1,0 +1,67 @@
+---------- Date: 2017-10-22 15:26:59 ~ IP : ::1 ----------
+REQUEST URI : /gitDev/admin/index.php?route=extension/installer/php&token=CCIjSJU7ByfYx09l1nwbhlXSga9Mrf5J
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitDev\vqmod/xml/irsfree_button_export_language.xml
+   id        : Export customer list and order list
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/language/english/english.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/customer.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/model/sale/customer.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/customer_list.tpl] (SKIPPED)
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitDev\vqmod/xml/irsfree_export_excel_bulk.xml
+   id        : Export Excel Data Bulk 
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+VQModObject::parseMods - Could not resolve path for [admin/language/english/english.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/catalog/product_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/catalog/category_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/customer/customer_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/order_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/return_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/marketing/coupon_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/voucher_list.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/report/report.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/report/report.twig] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_order.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_tax.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_shipping.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_return.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/sale_coupon.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/product_purchased.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/customer_order.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/extension/report/customer_reward.php] (SKIPPED)
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitDev\vqmod/xml/irsfree_reports_export_excel.xml
+   id        : Export Excel Reports
+   version   : 2.0
+   vqmver    : 2.4.1
+   author    : IRSSOFT
+VQModObject::parseMods - Could not resolve path for [admin/language/english/default.php] (SKIPPED)
+
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitDev\vqmod/xml/irsfree_reports_setion_export_excel.xml
+   id        : Export Excel : Reports
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/controller/report/affiliate_commission.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/report/affiliate_commission.tpl] (SKIPPED)
+
+MOD DETAILS:
+   modFile   : C:\xampp\htdocs\gitDev\vqmod/xml/irsfree_sales_section_export_excel.xml
+   id        : Export Excel : Sales 
+   version   : 1.0
+   vqmver    : 2.3.2 +
+   author    : IRS
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/affiliate.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/affiliate_list.tpl] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/controller/sale/coupon.php] (SKIPPED)
+VQModObject::parseMods - Could not resolve path for [admin/view/template/sale/coupon_list.tpl] (SKIPPED)
+
+----------------------------------------------------------------------
+
+
